@@ -1,0 +1,7 @@
+aiogram==3.29.1
+SQLAlchemy[asyncio]==2.0.51
+alembic==1.19.0
+psycopg[binary,pool]==3.3.4
+redis==6.2.0
+python-dotenv==1.2.2
+pydantic-settings==2.15.0
