@@ -33,6 +33,17 @@ async def delete_market(session: AsyncSession, market: MarketModel) -> None:
     await session.commit()
 
 
+async def reactivate_market(session: AsyncSession, market: MarketModel, address: str) -> MarketModel:
+    """Avval o'chirilgan (is_active=False) do'konni xuddi shu nom bilan qayta
+    faollashtiradi. `name` ustuni unique bo'lgani uchun create_market() bilan
+    qayta yaratib bo'lmaydi — shu funksiya o'sha muammoni oldini oladi."""
+    market.is_active = True
+    market.address = address
+    await session.commit()
+    await session.refresh(market)
+    return market
+
+
 async def count_markets(session: AsyncSession) -> int:
     result = await session.execute(
         select(MarketModel).where(MarketModel.is_active.is_(True))

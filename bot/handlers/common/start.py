@@ -1,7 +1,9 @@
+from pathlib import Path
+
 from aiogram import Bot, F, Router
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, FSInputFile, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.config import settings
@@ -19,6 +21,9 @@ from bot.states import Registration
 from bot.utils.commands import set_commands_for_user
 
 router = Router(name="start")
+
+# Til tanlangandan so'ng ko'rsatiladigan tanishtiruv rasmi
+LOGO_PATH = Path(__file__).resolve().parents[2] / "assets" / "logo.jpg"
 
 
 @router.message(CommandStart())
@@ -45,6 +50,14 @@ async def choose_language(callback: CallbackQuery, state: FSMContext):
     await state.update_data(language=lang)
     await state.set_state(Registration.waiting_phone)
     await callback.message.edit_text(get_text("choose_language", lang))
+
+    # Til tanlangandan so'ng — tanlangan tilda logotip va bot haqida
+    # qisqacha tanishtiruv chiqadi
+    await callback.message.answer_photo(
+        FSInputFile(LOGO_PATH),
+        caption=get_text("bot_intro", lang),
+    )
+
     await callback.message.answer(
         get_text("share_phone", lang), reply_markup=phone_request_kb(lang)
     )

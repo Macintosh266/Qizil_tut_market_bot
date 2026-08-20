@@ -8,6 +8,7 @@ from bot.database.repository.market_repo import get_all_markets
 from bot.database.repository.product_repo import (
     get_product,
     get_products_by_category,
+    get_products_by_market,
     search_products,
 )
 from bot.keyboards.user_kb import (
@@ -55,11 +56,14 @@ async def show_categories(callback: CallbackQuery, session: AsyncSession, lang: 
     categories = await get_categories_by_market(session, market_id)
 
     if not categories:
-        await callback.answer(get_text("no_categories", lang), show_alert=True)
+        # Kategoriya bo'lmasa ham, do'konda mahsulot bo'lishi mumkin —
+        # to'g'ridan-to'g'ri barcha mahsulotlarni ko'rsatamiz
+        await show_all_products(callback, session, lang, state)
         return
 
     await callback.message.edit_text(
-        get_text("choose_category", lang), reply_markup=categories_kb(categories, market_id)
+        get_text("choose_category", lang) + get_text("search_hint", lang),
+        reply_markup=categories_kb(categories, market_id, lang),
     )
     await state.set_state(Shopping.searching_product)  # matn kelsa - qidiruv sifatida qaraladi
     await callback.answer()
@@ -77,8 +81,26 @@ async def back_to_categories(callback: CallbackQuery, session: AsyncSession, lan
     market_id = int(callback.data.split(":")[1])
     categories = await get_categories_by_market(session, market_id)
     await callback.message.edit_text(
-        get_text("choose_category", lang), reply_markup=categories_kb(categories, market_id)
+        get_text("choose_category", lang) + get_text("search_hint", lang),
+        reply_markup=categories_kb(categories, market_id, lang),
     )
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("all_products:"))
+async def show_all_products(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext):
+    market_id = int(callback.data.split(":")[1])
+    await state.update_data(market_id=market_id)
+    products = await get_products_by_market(session, market_id)
+
+    if not products:
+        await callback.answer(get_text("no_products", lang), show_alert=True)
+        return
+
+    await callback.message.edit_text(
+        get_text("search_hint", lang), reply_markup=products_kb(products, market_id, _SEARCH_CATEGORY_SENTINEL)
+    )
+    await state.set_state(Shopping.searching_product)
     await callback.answer()
 
 
@@ -181,6 +203,66 @@ async def quantity_decrease(callback: CallbackQuery, lang: str):
     )
     await callback.answer()
 
+@router.callback_query(F.data.startswith("qty_set:"))
+async def quantity_start_manual_input(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext):
+    _, market_id, category_id, product_id = callback.data.split(":")
+    market_id, category_id, product_id = int(market_id), int(category_id), int(product_id)
+
+    product = await get_product(session, product_id)
+    if not product:
+        await callback.answer(get_text("product_not_found", lang), show_alert=True)
+        return
+
+    # Mahsulot tafsiloti xabarini keyin (edit_message_reply_markup orqali)
+    # yangilash uchun chat_id/message_id ni saqlab qo'yamiz.
+    await state.update_data(
+        qty_market_id=market_id,
+        qty_category_id=category_id,
+        qty_product_id=product_id,
+        qty_chat_id=callback.message.chat.id,
+        qty_message_id=callback.message.message_id,
+    )
+    await state.set_state(Shopping.waiting_quantity)
+    await callback.message.answer(get_text("product_qty_prompt", lang, name=product.name))
+    await callback.answer()
+
+
+@router.message(Shopping.waiting_quantity, F.text, F.text.func(lambda t: t not in _RESERVED_MENU_TEXTS))
+async def process_manual_quantity(message: Message, session: AsyncSession, lang: str, state: FSMContext):
+    if not message.text.strip().isdigit():
+        await message.answer(get_text("only_numbers", lang))
+        return
+ 
+    data = await state.get_data()
+    product_id = data.get("qty_product_id")
+    product = await get_product(session, product_id) if product_id else None
+    if not product:
+        await state.clear()
+        await message.answer(get_text("product_not_found", lang))
+        return
+ 
+    quantity = max(1, int(message.text.strip()))
+    if quantity > product.stock:
+        await message.answer(get_text("not_enough_stock", lang, stock=product.stock))
+        return
+ 
+    await state.clear()
+ 
+    try:
+        await message.delete()
+    except Exception:
+        pass
+ 
+    market_id, category_id = data.get("qty_market_id"), data.get("qty_category_id")
+    chat_id, message_id = data.get("qty_chat_id"), data.get("qty_message_id")
+    if not chat_id or not message_id:
+        return
+ 
+    keyboard = product_detail_kb(product_id, quantity, lang, market_id, category_id)
+    try:
+        await message.bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=keyboard)
+    except Exception:
+        pass
 
 @router.callback_query(F.data.startswith("cart_add:"))
 async def add_product_to_cart(callback: CallbackQuery, session: AsyncSession, lang: str):
@@ -213,7 +295,8 @@ async def back_to_products(callback: CallbackQuery, session: AsyncSession, lang:
     if category_id == _SEARCH_CATEGORY_SENTINEL:
         categories = await get_categories_by_market(session, market_id)
         await callback.message.answer(
-            get_text("choose_category", lang), reply_markup=categories_kb(categories, market_id)
+            get_text("choose_category", lang) + get_text("search_hint", lang),
+            reply_markup=categories_kb(categories, market_id, lang),
         )
     else:
         products = await get_products_by_category(session, market_id, category_id)

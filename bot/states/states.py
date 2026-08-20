@@ -8,11 +8,16 @@ class Registration(StatesGroup):
 
 class Shopping(StatesGroup):
     searching_product = State()
+    waiting_quantity = State()
 
 
 class Checkout(StatesGroup):
     waiting_address = State()
     confirm = State()
+
+
+class Cart(StatesGroup):
+    waiting_quantity = State()
 
 
 class SettingsStates(StatesGroup):

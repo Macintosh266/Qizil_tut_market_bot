@@ -442,6 +442,11 @@ LEXICON_EMPLOYE: dict[str, dict[str, str]] = {
         "ru": "ℹ️ {name} не заблокирован.",
         "en": "ℹ️ {name} is not banned.",
     },
+    "super_admin_ban":{
+        "uz":"Siz super adminni ban qila olmaysiz",
+        "ru":"Вы не можете заблокировать суперадминистратора.",
+        "en":"You cannot ban super admin.",
+    },
     "market_added": {
         "uz": "✅ '{name}' do'koni qo'shildi.",
         "ru": "✅ Магазин '{name}' добавлен.",

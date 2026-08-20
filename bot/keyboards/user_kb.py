@@ -83,11 +83,14 @@ def markets_kb(markets: list[MarketModel]) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
-def categories_kb(categories: list[CategoryModel], market_id: int) -> InlineKeyboardMarkup:
+def categories_kb(categories: list[CategoryModel], market_id: int, lang: str) -> InlineKeyboardMarkup:
     buttons = [
         [InlineKeyboardButton(text=c.name, callback_data=f"cat:{market_id}:{c.id}")]
         for c in categories
     ]
+    buttons.append(
+        [InlineKeyboardButton(text=get_text("all_products_btn", lang), callback_data=f"all_products:{market_id}")]
+    )
     buttons.append(
         [InlineKeyboardButton(text="⬅️", callback_data="back_to_markets")]
     )
@@ -125,7 +128,9 @@ def product_detail_kb(
                 InlineKeyboardButton(
                     text="<<", callback_data=f"qty_dec:{market_id}:{category_id}:{product_id}:{quantity}"
                 ),
-                InlineKeyboardButton(text=str(quantity), callback_data="noop"),
+                InlineKeyboardButton(
+                    text=str(quantity), callback_data=f"qty_set:{market_id}:{category_id}:{product_id}"
+                ),
                 InlineKeyboardButton(
                     text=">>", callback_data=f"qty_inc:{market_id}:{category_id}:{product_id}:{quantity}"
                 ),
@@ -148,7 +153,7 @@ def cart_kb(cart_items: list[dict], lang: str) -> InlineKeyboardMarkup:
             [
                 InlineKeyboardButton(text="➖", callback_data=f"cart_dec:{pid}"),
                 InlineKeyboardButton(
-                    text=f"{item['name']} x{item['quantity']}", callback_data="noop"
+                    text=f"{item['name']} x{item['quantity']}", callback_data=f"cart_qty:{pid}"
                 ),
                 InlineKeyboardButton(text="➕", callback_data=f"cart_inc:{pid}"),
                 InlineKeyboardButton(text="❌", callback_data=f"cart_del:{pid}"),
@@ -159,6 +164,7 @@ def cart_kb(cart_items: list[dict], lang: str) -> InlineKeyboardMarkup:
             [InlineKeyboardButton(text=get_text("cart_order_btn", lang), callback_data="checkout")]
         )
     return InlineKeyboardMarkup(inline_keyboard=buttons)
+
 
 
 def delivery_type_kb(lang: str) -> InlineKeyboardMarkup:

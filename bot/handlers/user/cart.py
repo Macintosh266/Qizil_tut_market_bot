@@ -1,4 +1,5 @@
-from aiogram import F, Router
+from aiogram import Bot, F, Router
+from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -6,6 +7,7 @@ from bot.database.repository.product_repo import get_product
 from bot.lexicons import get_text
 from bot.keyboards.user_kb import cart_kb
 from bot.redis import get_cart, remove_from_cart, set_cart_item
+from bot.states import Cart
 
 router = Router(name="cart")
 
@@ -72,6 +74,73 @@ async def cart_delete(callback: CallbackQuery, session: AsyncSession, lang: str)
     product_id = int(callback.data.split(":")[1])
     await remove_from_cart(callback.from_user.id, product_id)
     await _refresh(callback, session, lang)
+
+
+@router.callback_query(F.data.startswith("cart_qty:"))
+async def cart_start_edit_quantity(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext):
+    product_id = int(callback.data.split(":")[1])
+    product = await get_product(session, product_id)
+    if not product:
+        await callback.answer(get_text("product_not_found", lang), show_alert=True)
+        return
+
+    # Savat xabari (tugmalar bilan) qayerda joylashganini eslab qolamiz, chunki
+    # foydalanuvchi sonni yozib yuborgach, aynan shu xabarni yangilaymiz.
+    await state.update_data(
+        cart_product_id=product_id,
+        cart_chat_id=callback.message.chat.id,
+        cart_message_id=callback.message.message_id,
+    )
+    await state.set_state(Cart.waiting_quantity)
+    await callback.message.answer(get_text("cart_qty_prompt", lang, name=product.name))
+    await callback.answer()
+
+
+@router.message(Cart.waiting_quantity, F.text)
+async def cart_process_new_quantity(message: Message, session: AsyncSession, lang: str, state: FSMContext, bot: Bot):
+    if not message.text.strip().lstrip("-").isdigit():
+        await message.answer(get_text("only_numbers", lang))
+        return
+
+    data = await state.get_data()
+    product_id = data.get("cart_product_id")
+    product = await get_product(session, product_id) if product_id else None
+    if not product:
+        await state.clear()
+        await message.answer(get_text("product_not_found", lang))
+        return
+
+    quantity = max(0, int(message.text.strip()))
+    if quantity > product.stock:
+        await message.answer(get_text("not_enough_stock", lang, stock=product.stock))
+        return
+
+    await set_cart_item(message.from_user.id, product_id, quantity)
+    await state.clear()
+
+    # Foydalanuvchi yuborgan xabarni tozalab, asosiy savat xabarini yangilaymiz
+    try:
+        await message.delete()
+    except Exception:
+        pass
+
+    items, total = await _build_cart_view(session, message.from_user.id)
+    chat_id, message_id = data.get("cart_chat_id"), data.get("cart_message_id")
+    if not chat_id or not message_id:
+        return
+
+    try:
+        if not items:
+            await bot.edit_message_text(get_text("cart_empty", lang), chat_id=chat_id, message_id=message_id)
+        else:
+            await bot.edit_message_text(
+                _cart_text(items, total, lang),
+                chat_id=chat_id,
+                message_id=message_id,
+                reply_markup=cart_kb(items, lang),
+            )
+    except Exception:
+        pass
 
 
 async def _refresh(callback: CallbackQuery, session: AsyncSession, lang: str):

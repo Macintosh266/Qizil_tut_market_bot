@@ -53,7 +53,6 @@ def admin_panel_kb(lang: str) -> ReplyKeyboardMarkup:
             KeyboardButton(text=get_employe_text("statistics_btn", lang)),
         ],
         [KeyboardButton(text=get_text("menu_settings", lang))],
-        [KeyboardButton(text=get_employe_text("back_btn", lang))],
     ]
     return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
 
@@ -72,7 +71,6 @@ def market_admin_panel_kb(lang: str) -> ReplyKeyboardMarkup:
             KeyboardButton(text=get_employe_text("statistics_btn", lang)),
         ],
         [KeyboardButton(text=get_text("menu_settings", lang))],
-        [KeyboardButton(text=get_employe_text("back_btn", lang))],
     ]
     return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
 

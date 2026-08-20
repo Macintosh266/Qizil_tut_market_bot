@@ -1,5 +1,6 @@
 from bot.states.states import (
     AdminPanelStates,
+    Cart,
     Checkout,
     Registration,
     SettingsStates,
@@ -9,6 +10,7 @@ from bot.states.states import (
 __all__ = [
     "Registration",
     "Shopping",
+    "Cart",
     "Checkout",
     "SettingsStates",
     "AdminPanelStates",

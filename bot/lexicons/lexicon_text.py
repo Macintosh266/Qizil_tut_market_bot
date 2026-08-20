@@ -10,6 +10,51 @@ LEXICON_TEXT: dict[str, dict[str, str]] = {
         "ru": "Выберите язык:",
         "en": "Choose your language:",
     },
+    "bot_intro": {
+        "uz": (
+            "🌳 <b>QIZIL TUT | BARAKA</b>\n"
+            "<i>Halol savdo</i>\n\n"
+            "Assalomu alaykum va botimizga xush kelibsiz! 👋\n\n"
+            "<b>Qizil Tut</b> — bu sizga eng yaqin do'konlardan kerakli "
+            "mahsulotlarni qulay tarzda buyurtma qilish imkonini beruvchi "
+            "onlayn-do'kon botidir.\n\n"
+            "Bot orqali siz:\n"
+            "🏪 Yaqiningizdagi do'konlarni tanlashingiz\n"
+            "🛍 Mahsulotlarni kategoriya bo'yicha ko'rib chiqishingiz yoki qidirishingiz\n"
+            "🛒 Savatga qo'shib, kerakli miqdorni belgilashingiz\n"
+            "🚚 Yetkazib berish yoki o'zingiz olib ketishni tanlashingiz\n"
+            "📦 Buyurtmangiz holatini kuzatib borishingiz\n\n"
+            "mumkin — barchasi bitta bot ichida, tez va qulay."
+        ),
+        "ru": (
+            "🌳 <b>QIZIL TUT | BARAKA</b>\n"
+            "<i>Честная торговля</i>\n\n"
+            "Здравствуйте и добро пожаловать в наш бот! 👋\n\n"
+            "<b>Qizil Tut</b> — это бот онлайн-магазина, который позволяет "
+            "удобно заказывать нужные товары из ближайших к вам магазинов.\n\n"
+            "С помощью бота вы можете:\n"
+            "🏪 Выбрать ближайший к вам магазин\n"
+            "🛍 Просматривать товары по категориям или искать нужный товар\n"
+            "🛒 Добавлять в корзину и указывать нужное количество\n"
+            "🚚 Выбрать доставку или самовывоз\n"
+            "📦 Отслеживать статус своего заказа\n\n"
+            "— всё это в одном боте, быстро и удобно."
+        ),
+        "en": (
+            "🌳 <b>QIZIL TUT | BARAKA</b>\n"
+            "<i>Honest trade</i>\n\n"
+            "Hello and welcome to our bot! 👋\n\n"
+            "<b>Qizil Tut</b> is an online store bot that lets you conveniently "
+            "order the products you need from the store nearest to you.\n\n"
+            "With this bot you can:\n"
+            "🏪 Choose the store nearest to you\n"
+            "🛍 Browse products by category or search for what you need\n"
+            "🛒 Add items to your cart and set the quantity you need\n"
+            "🚚 Choose delivery or pickup\n"
+            "📦 Track the status of your order\n\n"
+            "— all in one bot, fast and convenient."
+        ),
+    },
     "welcome": {
         "uz": "Assalomu alaykum, {name}! 🛍 Online do'konimizga xush kelibsiz.",
         "ru": "Здравствуйте, {name}! 🛍 Добро пожаловать в наш онлайн-магазин.",
@@ -43,6 +88,11 @@ LEXICON_TEXT: dict[str, dict[str, str]] = {
         "uz": "Kategoriyani tanlang:",
         "ru": "Выберите категорию:",
         "en": "Choose a category:",
+    },
+    "all_products_btn": {
+        "uz": "📋 Barcha mahsulotlar",
+        "ru": "📋 Все товары",
+        "en": "📋 All products",
     },
     "no_categories": {
         "uz": "Bu do'konda kategoriyalar yo'q.",
@@ -86,6 +136,11 @@ LEXICON_TEXT: dict[str, dict[str, str]] = {
         "ru": "В наличии осталось только {stock} шт.",
         "en": "Only {stock} left in stock.",
     },
+    "product_not_found": {
+        "uz": "Bu mahsulot topilmadi (ehtimol o'chirilgan).",
+        "ru": "Товар не найден (возможно, он был удалён).",
+        "en": "This product was not found (it may have been removed).",
+    },
     "added_to_cart": {
         "uz": "✅ Savatga qo'shildi!",
         "ru": "✅ Добавлено в корзину!",
@@ -111,6 +166,21 @@ LEXICON_TEXT: dict[str, dict[str, str]] = {
         "uz": "✅ Buyurtma qilish",
         "ru": "✅ Оформить заказ",
         "en": "✅ Place order",
+    },
+    "cart_qty_prompt": {
+        "uz": "🔢 <b>{name}</b> uchun yangi sonni kiriting (0 — mahsulotni savatdan o'chiradi):",
+        "ru": "🔢 Введите новое количество для <b>{name}</b> (0 — удалит товар из корзины):",
+        "en": "🔢 Enter the new quantity for <b>{name}</b> (0 removes it from the cart):",
+    },
+    "product_qty_prompt": {
+        "uz": "🔢 <b>{name}</b> dan nechta olishni xohlaysiz? Sonni yozing (kamida 1):",
+        "ru": "🔢 Сколько штук <b>{name}</b> вы хотите взять? Введите число (не менее 1):",
+        "en": "🔢 How many of <b>{name}</b> would you like? Enter a number (at least 1):",
+    },
+    "only_numbers": {
+        "uz": "❗️ Iltimos, faqat son kiriting.",
+        "ru": "❗️ Пожалуйста, введите только число.",
+        "en": "❗️ Please enter a number only.",
     },
     "choose_delivery_type": {
         "uz": "Buyurtmani qanday olmoqchisiz?",
@@ -244,6 +314,11 @@ LEXICON_TEXT: dict[str, dict[str, str]] = {
             "Use the menu to shop, manage your cart, and view your "
             "profile and settings."
         ),
+    },
+    "unknown_command": {
+        "uz": "🤔 Bunday buyruq yoki xabar mavjud emas. Menyudan foydalaning yoki /help buyrug'ini yuboring.",
+        "ru": "🤔 Такой команды или сообщения не существует. Используйте меню или отправьте /help.",
+        "en": "🤔 No such command or message. Please use the menu or send /help.",
     },
 }
 
