@@ -31,6 +31,9 @@ class UserModel(BaseModels):
         back_populates="user", cascade="all, delete-orphan"
     )
     orders: Mapped[list["OrderModel"]] = relationship(back_populates="user")
+    feedbacks: Mapped[list["FeedbackModel"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
     handled_statistics: Mapped[list["StatisticModel"]] = relationship(
         back_populates="staff"
     )

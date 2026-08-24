@@ -4,11 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.database.repository.order_repo import accept_order, reject_order
 from bot.database.repository.user_repo import get_user_by_telegram_id
-from bot.filters import IsStaff
+from bot.filters import IsStaff, IsAdmin, IsSuperAdmin
 from bot.lexicons import get_employe_text
 
 router = Router(name="staff_orders")
-router.callback_query.filter(IsStaff())
+router.callback_query.filter(IsStaff(),IsAdmin(),IsSuperAdmin())
 
 
 @router.callback_query(F.data.startswith("staff_accept:"))

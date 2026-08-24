@@ -22,6 +22,8 @@ from bot.keyboards.admin_kb import (
     admin_management_kb,
     admin_panel_kb,
     ban_management_kb,
+    brand_management_kb,
+    category_management_kb,
     market_admin_panel_kb,
     market_management_kb,
     markets_select_kb,
@@ -74,6 +76,12 @@ _ALL_WAITING_STATES = [
     AdminPanelStates.searching_product,
     AdminPanelStates.searching_user,
     AdminPanelStates.waiting_statistic_period,
+    AdminPanelStates.waiting_add_category_name,
+    AdminPanelStates.waiting_confirm_delete_category,
+    AdminPanelStates.waiting_add_brand_name,
+    AdminPanelStates.waiting_confirm_delete_brand,
+    AdminPanelStates.waiting_new_brand_inline,
+    AdminPanelStates.waiting_new_category_inline,
 ]
 
 CANCEL_TEXTS = frozenset(get_employe_text("cancel_btn", l) for l in ("uz", "ru", "en"))
@@ -91,6 +99,9 @@ _ALL_ADMIN_BUTTON_KEYS = [
     "ban_user_btn", "unban_user_btn",
     "add_market_btn", "delete_market_btn", "market_list_btn",
     "add_product_btn", "delete_product_btn", "product_list_btn", "edit_product_price_btn",
+    "category_management_btn", "add_category_btn", "delete_category_btn", "category_list_btn",
+    "brand_management_btn", "add_brand_btn", "delete_brand_btn", "brand_list_btn",
+    "feedback_management_btn",
     "confirm_btn", "cancel_btn",
 ]
 ALL_ADMIN_BUTTON_TEXTS = frozenset(
@@ -129,6 +140,8 @@ def kb_for_level(level: str, lang: str, is_super_admin: bool = False):
         "ban_mgmt": ban_management_kb,
         "market_mgmt": market_management_kb,
         "product_mgmt": product_management_kb,
+        "category_mgmt": category_management_kb,
+        "brand_mgmt": brand_management_kb,
     }
     if level in mapping:
         return mapping[level](lang)
@@ -200,6 +213,12 @@ async def open_admin_management(message: Message, state: FSMContext, lang: str):
 
 @router.message(F.text.func(lambda t: t in btn_texts("staff_management_btn")))
 async def open_staff_management(message: Message, state: FSMContext, lang: str):
+    # STAFF (Xodimlar) boshqaruvi VAQTINCHA UZIB QO'YILGAN — bu handler kod
+    # darajasida saqlanib qolgan, lekin tugma admin_panel_kb/market_admin_panel_kb
+    # menyularidan olib tashlangani uchun (bot/keyboards/admin_kb.py) va
+    # staff.py routeri ulanmagani uchun (bot/handlers/admin/__init__.py)
+    # amalda ishga tushmaydi. To'liq qayta yoqish uchun o'sha ikki joyni
+    # ham qayta yoqish kerak.
     await state.set_state(None)
     await state.update_data(menu_level="staff_mgmt")
     await message.answer(get_employe_text("staff_management_btn", lang), reply_markup=staff_management_kb(lang))
@@ -224,6 +243,20 @@ async def open_product_management(message: Message, state: FSMContext, lang: str
     await state.set_state(None)
     await state.update_data(menu_level="product_mgmt")
     await message.answer(get_employe_text("product_management_btn", lang), reply_markup=product_management_kb(lang))
+
+
+@router.message(IsSuperAdmin(), F.text.func(lambda t: t in btn_texts("category_management_btn")))
+async def open_category_management(message: Message, state: FSMContext, lang: str):
+    await state.set_state(None)
+    await state.update_data(menu_level="category_mgmt")
+    await message.answer(get_employe_text("category_management_btn", lang), reply_markup=category_management_kb(lang))
+
+
+@router.message(IsSuperAdmin(), F.text.func(lambda t: t in btn_texts("brand_management_btn")))
+async def open_brand_management(message: Message, state: FSMContext, lang: str):
+    await state.set_state(None)
+    await state.update_data(menu_level="brand_mgmt")
+    await message.answer(get_employe_text("brand_management_btn", lang), reply_markup=brand_management_kb(lang))
 
 
 @router.message(F.text.func(lambda t: t in btn_texts("statistics_btn")))

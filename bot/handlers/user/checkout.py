@@ -4,7 +4,7 @@ from aiogram.types import CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.config import settings
-from bot.database.repository.order_repo import create_order_with_statistics
+from bot.database.repository.order_repo import create_order_with_statistics, get_order
 from bot.database.repository.product_repo import get_product
 from bot.database.repository.user_repo import get_active_address, get_user_by_telegram_id
 from bot.enums.enum import DeliveryType, UserRole
@@ -133,6 +133,12 @@ async def confirm_order(callback: CallbackQuery, state: FSMContext, session: Asy
         "📋", reply_markup=main_menu_kb(lang, is_admin=db_user.role in (UserRole.ADMIN, UserRole.SUPER_ADMIN))
     )
 
+    # Bildirishnomada mahsulotlar ro'yxatini ko'rsatish uchun buyurtmani
+    # items+product bilan birga (eager load) qayta o'qib olamiz
+    order = await get_order(session, order.id)
+    items_lines = [f"• {item.product.name} x{item.quantity}" for item in order.items if item.product]
+    items_text = "\n".join(items_lines) if items_lines else "-"
+
     # Ishchi/adminlarga xabar (super-admin ID'lariga + bazadagi barcha STAFF/ADMIN'larga yuborilishi mumkin;
     # soddalik uchun bu yerda super-adminlarga yuboriladi)
     bot = callback.bot
@@ -146,14 +152,32 @@ async def confirm_order(callback: CallbackQuery, state: FSMContext, session: Asy
                     order_id=order.id,
                     name=db_user.full_name,
                     phone=db_user.phone_number or "-",
+                    items=items_text,
                     total=f"{order.total_price:,.0f}",
                 ),
                 reply_markup=order_action_kb(order.id, "uz"),
             )
-            if order.latitude is not None and order.longitude is not None:
-                await bot.send_location(admin_id, latitude=float(order.latitude), longitude=float(order.longitude))
         except Exception:
             pass
+
+        # Buyurtmadagi har bir mahsulotning rasmini (mavjud bo'lsa) alohida yuboramiz
+        for item in order.items:
+            if not item.product or not item.product.image_file_id:
+                continue
+            try:
+                await bot.send_photo(
+                    admin_id,
+                    item.product.image_file_id,
+                    caption=f"{item.product.name} x{item.quantity}",
+                )
+            except Exception:
+                pass
+
+        if order.latitude is not None and order.longitude is not None:
+            try:
+                await bot.send_location(admin_id, latitude=float(order.latitude), longitude=float(order.longitude))
+            except Exception:
+                pass
 
     await callback.answer()
 

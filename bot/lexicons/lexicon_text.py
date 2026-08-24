@@ -74,6 +74,17 @@ LEXICON_TEXT: dict[str, dict[str, str]] = {
     "menu_cart": {"uz": "🛒 Savat", "ru": "🛒 Корзина", "en": "🛒 Cart"},
     "menu_profile": {"uz": "👤 Profil", "ru": "👤 Профиль", "en": "👤 Profile"},
     "menu_settings": {"uz": "⚙️ Sozlamalar", "ru": "⚙️ Настройки", "en": "⚙️ Settings"},
+    "menu_feedback": {"uz": "💬 Fikr bildirish", "ru": "💬 Оставить отзыв", "en": "💬 Give feedback"},
+    "feedback_prompt": {
+        "uz": "✍️ Fikr, taklif yoki shikoyatingizni yozib qoldiring:",
+        "ru": "✍️ Напишите ваш отзыв, предложение или жалобу:",
+        "en": "✍️ Please write your feedback, suggestion, or complaint:",
+    },
+    "feedback_sent": {
+        "uz": "✅ Rahmat! Fikringiz qabul qilindi.",
+        "ru": "✅ Спасибо! Ваш отзыв принят.",
+        "en": "✅ Thank you! Your feedback has been received.",
+    },
     "choose_market": {
         "uz": "Do'konni tanlang:",
         "ru": "Выберите магазин:",
@@ -88,6 +99,11 @@ LEXICON_TEXT: dict[str, dict[str, str]] = {
         "uz": "Kategoriyani tanlang:",
         "ru": "Выберите категорию:",
         "en": "Choose a category:",
+    },
+    "choose_brand": {
+        "uz": "Brendni tanlang:",
+        "ru": "Выберите бренд:",
+        "en": "Choose a brand:",
     },
     "all_products_btn": {
         "uz": "📋 Barcha mahsulotlar",

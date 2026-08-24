@@ -3,7 +3,19 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from bot.database.repository.category_repo import get_or_create_category
+from bot.database.repository.brand_repo import (
+    create_brand,
+    get_all_brands,
+    get_brand,
+    get_brand_by_name,
+)
+from bot.database.repository.category_repo import (
+    create_category,
+    get_all_categories,
+    get_category,
+    get_category_by_name,
+    get_or_create_category,
+)
 from bot.database.repository.market_repo import get_all_markets, get_market
 from bot.database.repository.product_repo import (
     add_or_restock_product,
@@ -21,7 +33,9 @@ from bot.enums.enum import UserRole
 from bot.filters import IsAdmin
 from bot.handlers.admin.base import CONFIRM_TEXTS, btn_texts, finish, track_list_message
 from bot.keyboards.admin_kb import (
+    brands_pick_kb,
     cancel_kb,
+    categories_pick_kb,
     confirm_kb,
     market_choose_kb,
     markets_select_kb,
@@ -97,21 +111,108 @@ async def process_add_product_qty(message: Message, state: FSMContext, lang: str
 
 
 @router.message(AdminPanelStates.waiting_add_product_price, F.text)
-async def process_add_product_price(message: Message, state: FSMContext, lang: str):
+async def process_add_product_price(message: Message, session: AsyncSession, lang: str, state: FSMContext):
     try:
         price = float(message.text.strip())
     except ValueError:
         await message.answer(get_employe_text("only_numbers", lang))
         return
     await state.update_data(price=price)
-    await state.set_state(AdminPanelStates.waiting_add_product_category)
-    await message.answer(get_employe_text("add_product_category_prompt", lang), reply_markup=cancel_kb(lang))
+    await _ask_choose_brand(message, session, lang)
 
 
-@router.message(AdminPanelStates.waiting_add_product_category, F.text)
-async def process_add_product_category(message: Message, session: AsyncSession, lang: str, state: FSMContext):
-    category_name = "Umumiy" if message.text.strip() == "-" else message.text.strip()
-    category = await get_or_create_category(session, category_name)
+async def _ask_choose_brand(target: Message, session: AsyncSession, lang: str) -> None:
+    brands = await get_all_brands(session)
+    await target.answer(
+        get_employe_text("choose_brand_prompt", lang),
+        reply_markup=brands_pick_kb(brands, "apb_pick", lang),
+    )
+
+
+@router.callback_query(F.data.startswith("apb_pick:"))
+async def pick_add_product_brand(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext):
+    value = callback.data.split(":", 1)[1]
+
+    if value == "new":
+        await state.set_state(AdminPanelStates.waiting_new_brand_inline)
+        try:
+            await callback.message.delete()
+        except Exception:
+            pass
+        await callback.message.answer(get_employe_text("add_brand_prompt", lang), reply_markup=cancel_kb(lang))
+        await callback.answer()
+        return
+
+    if value == "none":
+        await state.update_data(brand_id=None)
+    else:
+        brand = await get_brand(session, int(value))
+        if not brand:
+            await callback.answer(get_employe_text("no_brands", lang), show_alert=True)
+            return
+        await state.update_data(brand_id=brand.id)
+
+    try:
+        await callback.message.delete()
+    except Exception:
+        pass
+    await _ask_choose_category(callback.message, session, lang)
+    await callback.answer()
+
+
+@router.message(AdminPanelStates.waiting_new_brand_inline, F.text)
+async def process_new_brand_inline(message: Message, session: AsyncSession, lang: str, state: FSMContext):
+    name = message.text.strip()
+    brand = await get_brand_by_name(session, name)
+    if not brand:
+        brand = await create_brand(session, name)
+    await state.update_data(brand_id=brand.id)
+    await _ask_choose_category(message, session, lang)
+
+
+async def _ask_choose_category(target: Message, session: AsyncSession, lang: str) -> None:
+    categories = await get_all_categories(session)
+    await target.answer(
+        get_employe_text("choose_category_prompt", lang),
+        reply_markup=categories_pick_kb(categories, "apc_pick", lang),
+    )
+
+
+@router.callback_query(F.data.startswith("apc_pick:"))
+async def pick_add_product_category(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext):
+    value = callback.data.split(":", 1)[1]
+
+    if value == "new":
+        await state.set_state(AdminPanelStates.waiting_new_category_inline)
+        try:
+            await callback.message.delete()
+        except Exception:
+            pass
+        await callback.message.answer(get_employe_text("add_category_prompt", lang), reply_markup=cancel_kb(lang))
+        await callback.answer()
+        return
+
+    category = await get_category(session, int(value))
+    if not category:
+        await callback.answer(get_employe_text("no_categories", lang), show_alert=True)
+        return
+
+    await state.update_data(category_id=category.id)
+    await state.set_state(AdminPanelStates.waiting_add_product_photo)
+    try:
+        await callback.message.delete()
+    except Exception:
+        pass
+    await callback.message.answer(get_employe_text("add_product_photo_prompt", lang), reply_markup=cancel_kb(lang))
+    await callback.answer()
+
+
+@router.message(AdminPanelStates.waiting_new_category_inline, F.text)
+async def process_new_category_inline(message: Message, session: AsyncSession, lang: str, state: FSMContext):
+    name = message.text.strip()
+    category = await get_category_by_name(session, name)
+    if not category:
+        category = await create_category(session, name)
     await state.update_data(category_id=category.id)
     await state.set_state(AdminPanelStates.waiting_add_product_photo)
     await message.answer(get_employe_text("add_product_photo_prompt", lang), reply_markup=cancel_kb(lang))
@@ -129,6 +230,7 @@ async def _create_product_and_finish(
         price=data["price"],
         stock_to_add=data["quantity"],
         image_file_id=image_file_id,
+        brand_id=data.get("brand_id"),
     )
 
     if created:

@@ -2,6 +2,7 @@ from bot.states.states import (
     AdminPanelStates,
     Cart,
     Checkout,
+    Feedback,
     Registration,
     SettingsStates,
     Shopping,
@@ -14,4 +15,5 @@ __all__ = [
     "Checkout",
     "SettingsStates",
     "AdminPanelStates",
+    "Feedback",
 ]

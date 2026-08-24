@@ -7,7 +7,7 @@ from aiogram.types import (
 
 from bot.lexicons import get_text
 from bot.lexicons.lexicon_employe import get_employe_text
-from bot.models import CategoryModel, MarketModel, ProductsModel
+from bot.models import BrandModel, CategoryModel, MarketModel, ProductsModel
 
 
 def language_kb() -> InlineKeyboardMarkup:
@@ -71,7 +71,10 @@ def main_menu_kb(lang: str, is_admin: bool = False) -> ReplyKeyboardMarkup:
             KeyboardButton(text=get_text("menu_cart", lang)),
             KeyboardButton(text=get_text("menu_profile", lang)),
         ],
-        [KeyboardButton(text=get_text("menu_settings", lang))],
+        [
+            KeyboardButton(text=get_text("menu_feedback", lang)),
+            KeyboardButton(text=get_text("menu_settings", lang)),
+        ],
     ]
     return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
 
@@ -83,64 +86,92 @@ def markets_kb(markets: list[MarketModel]) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
-def categories_kb(categories: list[CategoryModel], market_id: int, lang: str) -> InlineKeyboardMarkup:
-    buttons = [
-        [InlineKeyboardButton(text=c.name, callback_data=f"cat:{market_id}:{c.id}")]
+def categories_filter_kb(categories: list[CategoryModel], market_id: int, lang: str) -> InlineKeyboardMarkup:
+    """Do'kon tanlangandan keyin chiqadigan kategoriya-filtr qatori —
+    barcha kategoriyalar BITTA qatorda (yonma-yon) chiqadi."""
+    row = [
+        InlineKeyboardButton(text=c.name, callback_data=f"cat_filter:{market_id}:{c.id}")
         for c in categories
     ]
-    buttons.append(
-        [InlineKeyboardButton(text=get_text("all_products_btn", lang), callback_data=f"all_products:{market_id}")]
-    )
-    buttons.append(
-        [InlineKeyboardButton(text="⬅️", callback_data="back_to_markets")]
-    )
-    return InlineKeyboardMarkup(inline_keyboard=buttons)
+    return InlineKeyboardMarkup(inline_keyboard=[row])
 
 
-def products_kb(products: list[ProductsModel], market_id: int, category_id: int) -> InlineKeyboardMarkup:
-    buttons = [
-        [
+def brands_filter_kb(brands: list[BrandModel], market_id: int, lang: str) -> InlineKeyboardMarkup:
+    """Do'kon tanlangandan keyin chiqadigan brend-filtr qatori — barcha
+    brendlar BITTA qatorda (yonma-yon) chiqadi."""
+    row = [
+        InlineKeyboardButton(text=b.name, callback_data=f"brand_filter:{market_id}:{b.id}")
+        for b in brands
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=[row])
+
+
+def products_page_kb(
+    products: list[ProductsModel], market_id: int, ftype: str, fid: int, page: int, total_pages: int
+) -> InlineKeyboardMarkup:
+    """
+    Mahsulotlar ro'yxati — eski, tugma ko'rinishida (nomi — narxi), ikkitadan
+    qatorda. Agar sahifalar soni bittadan ko'p bo'lsa, pastda ◀️ 1/2 ▶️
+    navigatsiya qatori qo'shiladi. Sahifa almashtirilganda xabar
+    O'CHIRILMAYDI — shu klaviaturaning o'zi (edit orqali) yangilanadi.
+
+    `ftype` — filtr turi: "a" (barchasi), "c" (kategoriya), "b" (brend),
+    "s" (qidiruv natijasi). `fid` — filtr id'si (ftype="a"/"s" bo'lsa 0).
+    """
+    buttons: list[list[InlineKeyboardButton]] = []
+    row: list[InlineKeyboardButton] = []
+    for p in products:
+        row.append(
             InlineKeyboardButton(
                 text=f"{p.name} — {p.price:,.0f}",
-                callback_data=f"product:{market_id}:{category_id}:{p.id}",
+                callback_data=f"product:{market_id}:{ftype}:{fid}:{page}:{p.id}",
             )
-        ]
-        for p in products
-    ]
-    buttons.append(
-        [InlineKeyboardButton(text="⬅️", callback_data=f"back_to_categories:{market_id}")]
-    )
+        )
+        if len(row) == 2:
+            buttons.append(row)
+            row = []
+    if row:
+        buttons.append(row)
+
+    if total_pages > 1:
+        nav_row = []
+        if page > 0:
+            nav_row.append(
+                InlineKeyboardButton(text="◀️", callback_data=f"prod_page:{market_id}:{ftype}:{fid}:{page - 1}")
+            )
+        nav_row.append(InlineKeyboardButton(text=f"{page + 1}/{total_pages}", callback_data="noop_page"))
+        if page < total_pages - 1:
+            nav_row.append(
+                InlineKeyboardButton(text="▶️", callback_data=f"prod_page:{market_id}:{ftype}:{fid}:{page + 1}")
+            )
+        buttons.append(nav_row)
+
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
 def product_detail_kb(
-    product_id: int, quantity: int, lang: str, market_id: int, category_id: int
+    product_id: int, quantity: int, lang: str, market_id: int, ftype: str, fid: int, page: int
 ) -> InlineKeyboardMarkup:
+    """
+    Mahsulot tafsiloti klaviaturasi (savatga qo'shish + miqdor boshqaruvi +
+    orqaga). "Orqaga" tugmasi mahsulot qaysi ro'yxat sahifasidan ochilgan
+    bo'lsa, aynan o'sha sahifaga (`prod_page:...`) qaytaradi.
+    """
+    ctx = f"{market_id}:{ftype}:{fid}:{page}"
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
                     text=get_text("add_to_cart_btn", lang),
-                    callback_data=f"cart_add:{market_id}:{category_id}:{product_id}:{quantity}",
+                    callback_data=f"cart_add:{product_id}:{quantity}",
                 )
             ],
             [
-                InlineKeyboardButton(
-                    text="<<", callback_data=f"qty_dec:{market_id}:{category_id}:{product_id}:{quantity}"
-                ),
-                InlineKeyboardButton(
-                    text=str(quantity), callback_data=f"qty_set:{market_id}:{category_id}:{product_id}"
-                ),
-                InlineKeyboardButton(
-                    text=">>", callback_data=f"qty_inc:{market_id}:{category_id}:{product_id}:{quantity}"
-                ),
+                InlineKeyboardButton(text="➖", callback_data=f"qty_dec:{product_id}:{quantity}:{ctx}"),
+                InlineKeyboardButton(text=str(quantity), callback_data=f"qty_set:{product_id}:{ctx}"),
+                InlineKeyboardButton(text="➕", callback_data=f"qty_inc:{product_id}:{quantity}:{ctx}"),
             ],
-            [
-                InlineKeyboardButton(
-                    text=get_text("back_btn", lang),
-                    callback_data=f"back_to_products:{market_id}:{category_id}",
-                )
-            ],
+            [InlineKeyboardButton(text=get_text("back_btn", lang), callback_data=f"prod_page:{ctx}")],
         ]
     )
 

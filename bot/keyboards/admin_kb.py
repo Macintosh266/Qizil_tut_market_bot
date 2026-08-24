@@ -42,15 +42,23 @@ def admin_panel_kb(lang: str) -> ReplyKeyboardMarkup:
     keyboard = [
         [
             KeyboardButton(text=get_employe_text("admin_management_btn", lang)),
-            KeyboardButton(text=get_employe_text("staff_management_btn", lang)),
-        ],
-        [
-            KeyboardButton(text=get_employe_text("ban_management_btn", lang)),
+            # STAFF (Xodimlar) boshqaruvi vaqtincha uzib qo'yilgan (qarang:
+            # bot/handlers/admin/__init__.py). Tugma shu sabab menyudan
+            # olib tashlangan — funksiya qayta yoqilganda bu qatorni ham
+            # qaytaring: KeyboardButton(text=get_employe_text("staff_management_btn", lang)),
             KeyboardButton(text=get_employe_text("market_management_btn", lang)),
         ],
         [
+            KeyboardButton(text=get_employe_text("ban_management_btn", lang)),
             KeyboardButton(text=get_employe_text("product_management_btn", lang)),
+        ],
+        [
+            KeyboardButton(text=get_employe_text("category_management_btn", lang)),
+            KeyboardButton(text=get_employe_text("brand_management_btn", lang)),
+        ],
+        [
             KeyboardButton(text=get_employe_text("statistics_btn", lang)),
+            KeyboardButton(text=get_employe_text("feedback_management_btn", lang)),
         ],
         [KeyboardButton(text=get_text("menu_settings", lang))],
     ]
@@ -59,18 +67,25 @@ def admin_panel_kb(lang: str) -> ReplyKeyboardMarkup:
 
 def market_admin_panel_kb(lang: str) -> ReplyKeyboardMarkup:
     """Oddiy (bitta do'konga tegishli) ADMIN uchun qisqartirilgan panel —
-    faqat o'z do'koniga tegishli bo'limlar: ishchilar, mahsulotlar, statistika.
-    Admin/Do'kon boshqaruvi (butun platformaga tegishli) ko'rinmaydi."""
+    faqat o'z do'koniga tegishli bo'limlar: mahsulotlar, statistika.
+    Admin/Do'kon/Kategoriya/Brend boshqaruvi (butun platformaga tegishli)
+    ko'rinmaydi — bular faqat SUPER_ADMIN uchun. STAFF (Xodimlar) boshqaruvi
+    vaqtincha uzib qo'yilgan — pastga qarang."""
     keyboard = [
         [
-            KeyboardButton(text=get_employe_text("staff_management_btn", lang)),
+            # STAFF (Xodimlar) boshqaruvi vaqtincha uzib qo'yilgan (qarang:
+            # bot/handlers/admin/__init__.py). Qayta yoqilganda:
+            # KeyboardButton(text=get_employe_text("staff_management_btn", lang)),
             KeyboardButton(text=get_employe_text("product_management_btn", lang)),
         ],
         [
             KeyboardButton(text=get_employe_text("ban_management_btn", lang)),
             KeyboardButton(text=get_employe_text("statistics_btn", lang)),
         ],
-        [KeyboardButton(text=get_text("menu_settings", lang))],
+        [KeyboardButton(text=get_employe_text("feedback_management_btn", lang)),
+        KeyboardButton(text=get_text("menu_settings", lang)),
+        ],
+        
     ]
     return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
 
@@ -125,6 +140,28 @@ def product_management_kb(lang: str) -> ReplyKeyboardMarkup:
         [KeyboardButton(text=get_employe_text("delete_product_btn", lang))],
         [KeyboardButton(text=get_employe_text("product_list_btn", lang))],
         [KeyboardButton(text=get_employe_text("edit_product_price_btn", lang))],
+        [KeyboardButton(text=get_employe_text("back_btn", lang))],
+    ]
+    return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
+
+
+def category_management_kb(lang: str) -> ReplyKeyboardMarkup:
+    """Kategoriya boshqaruvi tugmalari"""
+    keyboard = [
+        [KeyboardButton(text=get_employe_text("add_category_btn", lang))],
+        [KeyboardButton(text=get_employe_text("delete_category_btn", lang))],
+        [KeyboardButton(text=get_employe_text("category_list_btn", lang))],
+        [KeyboardButton(text=get_employe_text("back_btn", lang))],
+    ]
+    return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
+
+
+def brand_management_kb(lang: str) -> ReplyKeyboardMarkup:
+    """Brend boshqaruvi tugmalari"""
+    keyboard = [
+        [KeyboardButton(text=get_employe_text("add_brand_btn", lang))],
+        [KeyboardButton(text=get_employe_text("delete_brand_btn", lang))],
+        [KeyboardButton(text=get_employe_text("brand_list_btn", lang))],
         [KeyboardButton(text=get_employe_text("back_btn", lang))],
     ]
     return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
@@ -302,5 +339,91 @@ def users_select_kb(users: list, callback_prefix: str, lang: str) -> InlineKeybo
         buttons.append([InlineKeyboardButton(text=label, callback_data=f"{callback_prefix}:{u.id}")])
     buttons.append(
         [InlineKeyboardButton(text=get_employe_text("cancel_btn", lang), callback_data="admin_inline_cancel")]
+    )
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def categories_select_kb(categories: list, callback_prefix: str, lang: str) -> InlineKeyboardMarkup:
+    """Kategoriyalar ro'yxatidan bittasini tanlash (o'chirish uchun)."""
+    buttons = [
+        [InlineKeyboardButton(text=c.name, callback_data=f"{callback_prefix}:{c.id}")] for c in categories
+    ]
+    buttons.append(
+        [InlineKeyboardButton(text=get_employe_text("cancel_btn", lang), callback_data="admin_inline_cancel")]
+    )
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def categories_pick_kb(categories: list, callback_prefix: str, lang: str) -> InlineKeyboardMarkup:
+    """Mahsulot qo'shish jarayonida kategoriya tanlash — ro'yxatda yo'q bo'lsa
+    o'sha yerning o'zida yangisini qo'shish imkoniyati bilan."""
+    buttons = [
+        [InlineKeyboardButton(text=c.name, callback_data=f"{callback_prefix}:{c.id}")] for c in categories
+    ]
+    buttons.append(
+        [InlineKeyboardButton(text=get_employe_text("add_new_category_btn", lang), callback_data=f"{callback_prefix}:new")]
+    )
+    buttons.append(
+        [InlineKeyboardButton(text=get_employe_text("cancel_btn", lang), callback_data="admin_inline_cancel")]
+    )
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def brands_select_kb(brands: list, callback_prefix: str, lang: str) -> InlineKeyboardMarkup:
+    """Brendlar ro'yxatidan bittasini tanlash (o'chirish uchun)."""
+    buttons = [
+        [InlineKeyboardButton(text=b.name, callback_data=f"{callback_prefix}:{b.id}")] for b in brands
+    ]
+    buttons.append(
+        [InlineKeyboardButton(text=get_employe_text("cancel_btn", lang), callback_data="admin_inline_cancel")]
+    )
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def brands_pick_kb(brands: list, callback_prefix: str, lang: str) -> InlineKeyboardMarkup:
+    """Mahsulot qo'shish jarayonida brend tanlash — 'brendsiz' va yangi brend
+    qo'shish imkoniyatlari bilan."""
+    buttons = [
+        [InlineKeyboardButton(text=b.name, callback_data=f"{callback_prefix}:{b.id}")] for b in brands
+    ]
+    buttons.append(
+        [InlineKeyboardButton(text=get_employe_text("no_brand_btn", lang), callback_data=f"{callback_prefix}:none")]
+    )
+    buttons.append(
+        [InlineKeyboardButton(text=get_employe_text("add_new_brand_btn", lang), callback_data=f"{callback_prefix}:new")]
+    )
+    buttons.append(
+        [InlineKeyboardButton(text=get_employe_text("cancel_btn", lang), callback_data="admin_inline_cancel")]
+    )
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def feedback_nav_kb(offset: int, total: int, is_reviewed: bool, feedback_id: int, lang: str) -> InlineKeyboardMarkup:
+    """Fikr-mulohazalarni birma-bir ko'rish uchun navigatsiya (◀️/▶️),
+    'ko'rib chiqildi' belgisi va yopish tugmasi."""
+    nav_row = []
+    if offset > 0:
+        nav_row.append(
+            InlineKeyboardButton(text="◀️", callback_data=f"fb_nav:{offset - 1}")
+        )
+    if offset < total - 1:
+        nav_row.append(
+            InlineKeyboardButton(text="▶️", callback_data=f"fb_nav:{offset + 1}")
+        )
+
+    buttons = []
+    if nav_row:
+        buttons.append(nav_row)
+    if not is_reviewed:
+        buttons.append(
+            [
+                InlineKeyboardButton(
+                    text=get_employe_text("mark_reviewed_btn", lang),
+                    callback_data=f"fb_mark:{feedback_id}:{offset}",
+                )
+            ]
+        )
+    buttons.append(
+        [InlineKeyboardButton(text=get_employe_text("close_btn", lang), callback_data="fb_close")]
     )
     return InlineKeyboardMarkup(inline_keyboard=buttons)

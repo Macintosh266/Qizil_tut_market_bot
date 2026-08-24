@@ -20,6 +20,10 @@ class Cart(StatesGroup):
     waiting_quantity = State()
 
 
+class Feedback(StatesGroup):
+    waiting_text = State()
+
+
 class SettingsStates(StatesGroup):
     waiting_new_name = State()
     waiting_new_address = State()
@@ -78,3 +82,16 @@ class AdminPanelStates(StatesGroup):
 
     # Statistika uchun maxsus davr yozib kiritish (tugmalar bilan bir qatorda)
     waiting_statistic_period = State()
+
+    # Kategoriya boshqaruvi (alohida bo'lim)
+    waiting_add_category_name = State()
+    waiting_confirm_delete_category = State()
+
+    # Brend boshqaruvi (alohida bo'lim)
+    waiting_add_brand_name = State()
+    waiting_confirm_delete_brand = State()
+
+    # Mahsulot qo'shish jarayonida "+ Yangi ..." tugmasi bosilganda
+    # (brend/kategoriya ro'yxatida yo'q nomni shu yerdan yozib kiritadi)
+    waiting_new_brand_inline = State()
+    waiting_new_category_inline = State()

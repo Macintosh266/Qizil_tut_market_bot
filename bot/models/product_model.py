@@ -10,6 +10,7 @@ class ProductsModel(BaseModels):
     id: Mapped[int] = mapped_column(primary_key=True)
     market_id: Mapped[int] = mapped_column(ForeignKey("markets.id"))
     category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"))
+    brand_id: Mapped[int | None] = mapped_column(ForeignKey("brands.id"), nullable=True)
     name: Mapped[str] = mapped_column(String(255), index=True)  # qidiruv uchun index
     discription: Mapped[str | None] = mapped_column(Text, nullable=True)
     price: Mapped[float] = mapped_column(Numeric(12, 2))
@@ -19,5 +20,6 @@ class ProductsModel(BaseModels):
 
     market: Mapped["MarketModel"] = relationship(back_populates="products")
     category: Mapped["CategoryModel"] = relationship(back_populates="products")
+    brand: Mapped["BrandModel | None"] = relationship(back_populates="products")
     order_items: Mapped[list["OrderItemModel"]] = relationship(back_populates="product")
     statistics: Mapped[list["StatisticModel"]] = relationship(back_populates="product")

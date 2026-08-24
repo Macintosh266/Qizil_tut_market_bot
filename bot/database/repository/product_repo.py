@@ -56,10 +56,12 @@ async def create_product(
     stock: int,
     discription: str | None = None,
     image_file_id: str | None = None,
+    brand_id: int | None = None,
 ) -> ProductsModel:
     product = ProductsModel(
         market_id=market_id,
         category_id=category_id,
+        brand_id=brand_id,
         name=name,
         price=price,
         stock=stock,
@@ -81,6 +83,7 @@ async def add_or_restock_product(
     stock_to_add: int,
     discription: str | None = None,
     image_file_id: str | None = None,
+    brand_id: int | None = None,
 ) -> tuple[ProductsModel, bool]:
     """
     Agar shu do'konda xuddi shu nomdagi (faol) mahsulot ALLAQACHON bo'lsa —
@@ -93,6 +96,7 @@ async def add_or_restock_product(
         existing.stock += stock_to_add
         existing.price = price
         existing.category_id = category_id
+        existing.brand_id = brand_id
         if image_file_id:
             existing.image_file_id = image_file_id
         if discription:
@@ -110,6 +114,7 @@ async def add_or_restock_product(
         stock=stock_to_add,
         discription=discription,
         image_file_id=image_file_id,
+        brand_id=brand_id,
     )
     return product, True
 
@@ -129,6 +134,18 @@ async def get_products_by_market(session: AsyncSession, market_id: int) -> list[
     result = await session.execute(
         select(ProductsModel).where(
             ProductsModel.market_id == market_id, ProductsModel.is_active.is_(True)
+        )
+    )
+    return list(result.scalars().all())
+
+
+async def get_products_by_brand(session: AsyncSession, market_id: int, brand_id: int) -> list[ProductsModel]:
+    """Shu do'konda, shu brendga tegishli barcha faol mahsulotlar ro'yxati."""
+    result = await session.execute(
+        select(ProductsModel).where(
+            ProductsModel.market_id == market_id,
+            ProductsModel.brand_id == brand_id,
+            ProductsModel.is_active.is_(True),
         )
     )
     return list(result.scalars().all())
@@ -156,6 +173,11 @@ async def update_product_stock(session: AsyncSession, product: ProductsModel, ne
 
 async def update_product_category(session: AsyncSession, product: ProductsModel, new_category_id: int) -> None:
     product.category_id = new_category_id
+    await session.commit()
+
+
+async def update_product_brand(session: AsyncSession, product: ProductsModel, new_brand_id: int | None) -> None:
+    product.brand_id = new_brand_id
     await session.commit()
 
 

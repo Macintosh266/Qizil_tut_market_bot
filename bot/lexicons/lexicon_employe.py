@@ -216,14 +216,190 @@ LEXICON_EMPLOYE: dict[str, dict[str, str]] = {
         "en": "How many units are in stock? (enter a number):",
     },
     "add_product_category_prompt": {
-        "uz": "Kategoriya nomini kiriting (o'tkazib yuborish uchun '-' yozing):",
-        "ru": "Введите название категории (чтобы пропустить, напишите '-'):",
-        "en": "Enter category name (send '-' to skip):",
+        "uz": "Yangi kategoriya nomini kiriting:",
+        "ru": "Введите название новой категории:",
+        "en": "Enter the new category name:",
+    },
+    "choose_category_prompt": {
+        "uz": "📂 Mahsulot uchun kategoriyani tanlang:",
+        "ru": "📂 Выберите категорию для товара:",
+        "en": "📂 Choose a category for the product:",
+    },
+    "add_new_category_btn": {
+        "uz": "➕ Yangi kategoriya",
+        "ru": "➕ Новая категория",
+        "en": "➕ New category",
+    },
+    "choose_brand_prompt": {
+        "uz": "🏷 Mahsulot uchun brendni tanlang:",
+        "ru": "🏷 Выберите бренд для товара:",
+        "en": "🏷 Choose a brand for the product:",
+    },
+    "no_brand_btn": {
+        "uz": "🚫 Brendsiz",
+        "ru": "🚫 Без бренда",
+        "en": "🚫 No brand",
+    },
+    "add_new_brand_btn": {
+        "uz": "➕ Yangi brend",
+        "ru": "➕ Новый бренд",
+        "en": "➕ New brand",
     },
     "add_product_photo_prompt": {
         "uz": "Mahsulot rasmini yuboring (o'tkazib yuborish uchun '-' yozing):",
         "ru": "Отправьте фото товара (чтобы пропустить, напишите '-'):",
         "en": "Send a product photo (send '-' to skip):",
+    },
+
+    # ========== KATEGORIYA BOSHQARUVI (alohida bo'lim) ==========
+    "category_management_btn": {
+        "uz": "🗂 Kategoriyalar",
+        "ru": "🗂 Категории",
+        "en": "🗂 Categories",
+    },
+    "add_category_btn": {
+        "uz": "➕ Kategoriya qo'shish",
+        "ru": "➕ Добавить категорию",
+        "en": "➕ Add category",
+    },
+    "delete_category_btn": {
+        "uz": "🗑 Kategoriya o'chirish",
+        "ru": "🗑 Удалить категорию",
+        "en": "🗑 Delete category",
+    },
+    "category_list_btn": {
+        "uz": "📋 Kategoriyalar ro'yxati",
+        "ru": "📋 Список категорий",
+        "en": "📋 Category list",
+    },
+    "add_category_prompt": {
+        "uz": "Yangi kategoriya nomini kiriting:",
+        "ru": "Введите название новой категории:",
+        "en": "Enter the new category name:",
+    },
+    "category_added": {
+        "uz": "✅ '{name}' kategoriyasi qo'shildi.",
+        "ru": "✅ Категория '{name}' добавлена.",
+        "en": "✅ Category '{name}' added.",
+    },
+    "category_exists": {
+        "uz": "❗️ Bu nomdagi kategoriya allaqachon mavjud.",
+        "ru": "❗️ Категория с таким названием уже существует.",
+        "en": "❗️ A category with this name already exists.",
+    },
+    "no_categories": {
+        "uz": "Hozircha kategoriyalar yo'q. Avval kategoriya qo'shing.",
+        "ru": "Пока нет категорий. Сначала добавьте категорию.",
+        "en": "There are no categories yet. Please add one first.",
+    },
+    "category_has_products": {
+        "uz": "❗️ Bu kategoriyada mahsulotlar mavjud. Avval ularni boshqa kategoriyaga o'tkazing yoki o'chiring.",
+        "ru": "❗️ В этой категории есть товары. Сначала перенесите их в другую категорию или удалите.",
+        "en": "❗️ This category still has products. Move or delete them first.",
+    },
+    "confirm_delete_category": {
+        "uz": "'{name}' kategoriyasini o'chirishni tasdiqlaysizmi?",
+        "ru": "Подтвердите удаление категории '{name}'?",
+        "en": "Confirm deleting the category '{name}'?",
+    },
+    "category_deleted": {
+        "uz": "🗑 '{name}' kategoriyasi o'chirildi.",
+        "ru": "🗑 Категория '{name}' удалена.",
+        "en": "🗑 Category '{name}' deleted.",
+    },
+
+    # ========== BREND BOSHQARUVI (alohida bo'lim) ==========
+    "brand_management_btn": {
+        "uz": "🏷 Brendlar",
+        "ru": "🏷 Бренды",
+        "en": "🏷 Brands",
+    },
+    "add_brand_btn": {
+        "uz": "➕ Brend qo'shish",
+        "ru": "➕ Добавить бренд",
+        "en": "➕ Add brand",
+    },
+    "delete_brand_btn": {
+        "uz": "🗑 Brend o'chirish",
+        "ru": "🗑 Удалить бренд",
+        "en": "🗑 Delete brand",
+    },
+    "brand_list_btn": {
+        "uz": "📋 Brendlar ro'yxati",
+        "ru": "📋 Список брендов",
+        "en": "📋 Brand list",
+    },
+    "add_brand_prompt": {
+        "uz": "Yangi brend nomini kiriting:",
+        "ru": "Введите название нового бренда:",
+        "en": "Enter the new brand name:",
+    },
+    "brand_added": {
+        "uz": "✅ '{name}' brendi qo'shildi.",
+        "ru": "✅ Бренд '{name}' добавлен.",
+        "en": "✅ Brand '{name}' added.",
+    },
+    "brand_exists": {
+        "uz": "❗️ Bu nomdagi brend allaqachon mavjud.",
+        "ru": "❗️ Бренд с таким названием уже существует.",
+        "en": "❗️ A brand with this name already exists.",
+    },
+    "no_brands": {
+        "uz": "Hozircha brendlar yo'q.",
+        "ru": "Пока нет брендов.",
+        "en": "There are no brands yet.",
+    },
+    "confirm_delete_brand": {
+        "uz": "'{name}' brendini o'chirishni tasdiqlaysizmi? (bu brenddagi mahsulotlar 'brendsiz' bo'lib qoladi)",
+        "ru": "Подтвердите удаление бренда '{name}'? (товары этого бренда останутся без бренда)",
+        "en": "Confirm deleting the brand '{name}'? (its products will become brand-less)",
+    },
+    "brand_deleted": {
+        "uz": "🗑 '{name}' brendi o'chirildi.",
+        "ru": "🗑 Бренд '{name}' удалён.",
+        "en": "🗑 Brand '{name}' deleted.",
+    },
+
+    # ========== FIKR-MULOHAZALAR (admin ko'rinishi) ==========
+    "feedback_management_btn": {
+        "uz": "💬 Fikrlar",
+        "ru": "💬 Отзывы",
+        "en": "💬 Feedback",
+    },
+    "feedback_empty": {
+        "uz": "Hozircha fikrlar yo'q.",
+        "ru": "Пока нет отзывов.",
+        "en": "There is no feedback yet.",
+    },
+    "feedback_view": {
+        "uz": "💬 Fikr {index}/{total}\n👤 {name}{username}\n\n{text}\n\n{status}",
+        "ru": "💬 Отзыв {index}/{total}\n👤 {name}{username}\n\n{text}\n\n{status}",
+        "en": "💬 Feedback {index}/{total}\n👤 {name}{username}\n\n{text}\n\n{status}",
+    },
+    "feedback_status_new": {
+        "uz": "🆕 Ko'rilmagan",
+        "ru": "🆕 Не просмотрено",
+        "en": "🆕 Unreviewed",
+    },
+    "feedback_status_reviewed": {
+        "uz": "✅ Ko'rib chiqilgan",
+        "ru": "✅ Просмотрено",
+        "en": "✅ Reviewed",
+    },
+    "mark_reviewed_btn": {
+        "uz": "✅ Ko'rib chiqildi deb belgilash",
+        "ru": "✅ Отметить как просмотренное",
+        "en": "✅ Mark as reviewed",
+    },
+    "feedback_marked_reviewed": {
+        "uz": "✅ Ko'rib chiqilgan deb belgilandi.",
+        "ru": "✅ Отмечено как просмотренное.",
+        "en": "✅ Marked as reviewed.",
+    },
+    "close_btn": {
+        "uz": "✖️ Yopish",
+        "ru": "✖️ Закрыть",
+        "en": "✖️ Close",
     },
     "choose_market_prompt": {
         "uz": "Do'konni tanlang:",
@@ -480,9 +656,9 @@ LEXICON_EMPLOYE: dict[str, dict[str, str]] = {
 
     # ========== BUYURTMA MATNLARI ==========
     "new_order_notify": {
-        "uz": "🆕 Yangi buyurtma #{order_id}\nMijoz: {name}\nTelefon: {phone}\nSumma: {total}",
-        "ru": "🆕 Новый заказ #{order_id}\nКлиент: {name}\nТелефон: {phone}\nСумма: {total}",
-        "en": "🆕 New order #{order_id}\nCustomer: {name}\nPhone: {phone}\nTotal: {total}",
+        "uz": "🆕 Yangi buyurtma #{order_id}\nMijoz: {name}\nTelefon: {phone}\n\n📦 Mahsulotlar:\n{items}\n\nSumma: {total}",
+        "ru": "🆕 Новый заказ #{order_id}\nКлиент: {name}\nТелефон: {phone}\n\n📦 Товары:\n{items}\n\nСумма: {total}",
+        "en": "🆕 New order #{order_id}\nCustomer: {name}\nPhone: {phone}\n\n📦 Items:\n{items}\n\nTotal: {total}",
     },
     "accept_order_btn": {
         "uz": "✅ Qabul qilish",
