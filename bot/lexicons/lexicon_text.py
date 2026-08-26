@@ -95,6 +95,11 @@ LEXICON_TEXT: dict[str, dict[str, str]] = {
         "ru": "Пока нет доступных магазинов.",
         "en": "No markets available yet.",
     },
+    "market_empty": {
+        "uz": "😔 Afsuski, bu do'konda hozircha birorta ham mahsulot yo'q.",
+        "ru": "😔 К сожалению, в этом магазине пока нет ни одного товара.",
+        "en": "😔 Unfortunately, this market has no products yet.",
+    },
     "choose_category": {
         "uz": "Kategoriyani tanlang:",
         "ru": "Выберите категорию:",
@@ -244,14 +249,24 @@ LEXICON_TEXT: dict[str, dict[str, str]] = {
         "en": "❌ Cancel",
     },
     "order_placed": {
-        "uz": "✅ Buyurtmangiz qabul qilindi! Raqami: #{order_id}",
-        "ru": "✅ Ваш заказ принят! Номер: #{order_id}",
-        "en": "✅ Your order has been placed! Order #{order_id}",
+        "uz": "📦 Buyurtmangiz #{order_id} qabul qilindi va ko'rib chiqilmoqda. Tasdiqlangach sizga xabar beramiz.",
+        "ru": "📦 Ваш заказ #{order_id} принят и находится на рассмотрении. Мы сообщим вам, как только он будет подтверждён.",
+        "en": "📦 Your order #{order_id} has been received and is being reviewed. We'll notify you once it's confirmed.",
     },
     "order_canceled": {
         "uz": "❌ Buyurtma bekor qilindi.",
         "ru": "❌ Заказ отменён.",
         "en": "❌ Order canceled.",
+    },
+    "order_accepted_customer": {
+        "uz": "✅ Buyurtmangiz #{order_id} qabul qilindi! Tez orada siz bilan bog'lanishadi.",
+        "ru": "✅ Ваш заказ #{order_id} принят! С вами скоро свяжутся.",
+        "en": "✅ Your order #{order_id} has been accepted! We'll contact you shortly.",
+    },
+    "order_rejected_customer": {
+        "uz": "❌ Afsuski, buyurtmangiz #{order_id} rad etildi.",
+        "ru": "❌ К сожалению, ваш заказ #{order_id} отклонён.",
+        "en": "❌ Unfortunately, your order #{order_id} has been rejected.",
     },
     "canceled": {
         "uz": "❌ Bekor qilindi.",
@@ -310,25 +325,72 @@ LEXICON_TEXT: dict[str, dict[str, str]] = {
     },
     "help_user": {
         "uz": (
-            "🛍 <b>Online Market bot</b>\n\n"
-            "/start — botni boshlash\n"
+            "🛍 <b>Qizil Tut | Baraka</b>\n\n"
+            "/start — botni qayta boshlash\n"
             "/help — yordam\n\n"
-            "Menyudan foydalanib xarid qiling, savatni boshqaring, "
-            "profil va sozlamalarni ko'ring."
+            "Pastdagi menyudan foydalaning: mahsulot xarid qiling, savatni "
+            "boshqaring, buyurtma bering, profil va sozlamalaringizni ko'ring, "
+            "yoki bizga fikr-mulohaza qoldiring."
         ),
         "ru": (
-            "🛍 <b>Online Market bot</b>\n\n"
-            "/start — начать\n"
+            "🛍 <b>Qizil Tut | Baraka</b>\n\n"
+            "/start — перезапустить бота\n"
             "/help — помощь\n\n"
-            "Используйте меню для покупок, управления корзиной, "
-            "просмотра профиля и настроек."
+            "Используйте меню ниже: покупайте товары, управляйте корзиной, "
+            "оформляйте заказ, смотрите профиль и настройки, а также "
+            "оставляйте нам отзывы."
         ),
         "en": (
-            "🛍 <b>Online Market bot</b>\n\n"
-            "/start — start the bot\n"
+            "🛍 <b>Qizil Tut | Baraka</b>\n\n"
+            "/start — restart the bot\n"
             "/help — help\n\n"
-            "Use the menu to shop, manage your cart, and view your "
-            "profile and settings."
+            "Use the menu below: shop for products, manage your cart, "
+            "place an order, view your profile and settings, or leave "
+            "us feedback."
+        ),
+    },
+    "help_admin": {
+        "uz": (
+            "🛠 <b>Admin panel — yordam</b>\n\n"
+            "/start — botni qayta boshlash\n"
+            "/help — yordam\n\n"
+            "Admin panel orqali quyidagilarni boshqarasiz:\n"
+            "📦 <b>Mahsulotlar</b> — qo'shish, tahrirlash, o'chirish, ro'yxat\n"
+            "🗂 <b>Kategoriyalar</b> va 🏷 <b>Brendlar</b> — qo'shish/o'chirish\n"
+            "🏪 <b>Do'konlar</b> va 👤 <b>Adminlar</b> — faqat super-admin uchun\n"
+            "🚫 <b>Ban</b> — foydalanuvchini bloklash/blokdan chiqarish\n"
+            "📊 <b>Statistika</b> — davr bo'yicha savdo hisobotlari\n"
+            "💬 <b>Fikrlar</b> — mijozlar qoldirgan fikr-mulohazalar\n\n"
+            "Yangi buyurtma tushganda sizga xabar keladi — 'Qabul qilish' "
+            "yoki 'Rad etish' tugmasi orqali javob bering."
+        ),
+        "ru": (
+            "🛠 <b>Панель администратора — помощь</b>\n\n"
+            "/start — перезапустить бота\n"
+            "/help — помощь\n\n"
+            "Через админ-панель вы управляете:\n"
+            "📦 <b>Товарами</b> — добавление, редактирование, удаление, список\n"
+            "🗂 <b>Категориями</b> и 🏷 <b>Брендами</b> — добавление/удаление\n"
+            "🏪 <b>Магазинами</b> и 👤 <b>Админами</b> — только для супер-админа\n"
+            "🚫 <b>Баном</b> — блокировка/разблокировка пользователей\n"
+            "📊 <b>Статистикой</b> — отчёты о продажах за период\n"
+            "💬 <b>Отзывами</b> — отзывы, оставленные клиентами\n\n"
+            "При поступлении нового заказа вам придёт уведомление — "
+            "ответьте кнопкой «Принять» или «Отклонить»."
+        ),
+        "en": (
+            "🛠 <b>Admin panel — help</b>\n\n"
+            "/start — restart the bot\n"
+            "/help — help\n\n"
+            "Through the admin panel you manage:\n"
+            "📦 <b>Products</b> — add, edit, delete, list\n"
+            "🗂 <b>Categories</b> and 🏷 <b>Brands</b> — add/delete\n"
+            "🏪 <b>Markets</b> and 👤 <b>Admins</b> — super-admin only\n"
+            "🚫 <b>Ban</b> — block/unblock users\n"
+            "📊 <b>Statistics</b> — sales reports by period\n"
+            "💬 <b>Feedback</b> — messages left by customers\n\n"
+            "You'll be notified of new orders — reply using the "
+            "'Accept' or 'Reject' button."
         ),
     },
     "unknown_command": {

@@ -129,6 +129,13 @@ async def decrease_stock(session: AsyncSession, product: ProductsModel, quantity
     await session.commit()
 
 
+async def increase_stock(session: AsyncSession, product: ProductsModel, quantity: int) -> None:
+    """Buyurtma rad etilganda (yoki bekor qilinganda) ombordagi sonini
+    qaytarish uchun — decrease_stock'ning teskarisi."""
+    product.stock += quantity
+    await session.commit()
+
+
 async def get_products_by_market(session: AsyncSession, market_id: int) -> list[ProductsModel]:
     """Do'kondagi barcha (kategoriyasidan qat'i nazar) faol mahsulotlar ro'yxati."""
     result = await session.execute(

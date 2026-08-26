@@ -93,7 +93,7 @@ async def get_phone(message: Message, state: FSMContext, session: AsyncSession, 
 @router.message(F.text.in_(["/help"]))
 async def cmd_help(message: Message, db_user: UserModel | None, lang: str):
     if db_user and db_user.role in (UserRole.ADMIN, UserRole.SUPER_ADMIN):
-        text = get_employe_text("admin_menu", lang) + "\n\n" + get_text("help_user", lang)
+        text = get_text("help_admin", lang)
     elif db_user and db_user.role == UserRole.STAFF:
         text = get_employe_text("staff_menu", lang) + "\n\n" + get_text("help_user", lang)
     else:

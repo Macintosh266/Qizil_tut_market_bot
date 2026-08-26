@@ -176,6 +176,7 @@ def product_detail_kb(
     )
 
 
+
 def cart_kb(cart_items: list[dict], lang: str) -> InlineKeyboardMarkup:
     buttons = []
     for item in cart_items:

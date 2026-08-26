@@ -6,11 +6,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bot.database.repository.product_repo import get_product
 from bot.lexicons import get_text
 from bot.keyboards.user_kb import cart_kb
+from bot.lexicons.lexicon_employe import get_employe_text
 from bot.redis import get_cart, remove_from_cart, set_cart_item
 from bot.states import Cart
 
 router = Router(name="cart")
 
+_RESERVED_MENU_TEXTS = frozenset(
+    get_text(key, lang)
+    for key in ("menu_shopping", "menu_cart", "menu_profile", "menu_settings", "menu_feedback")
+    for lang in ("uz", "ru", "en")
+) | frozenset(get_employe_text("admin_menu", lang) for lang in ("uz", "ru", "en"))
 
 async def _build_cart_view(session: AsyncSession, user_id: int):
     cart = await get_cart(user_id)
@@ -96,7 +102,7 @@ async def cart_start_edit_quantity(callback: CallbackQuery, session: AsyncSessio
     await callback.answer()
 
 
-@router.message(Cart.waiting_quantity, F.text)
+@router.message(Cart.waiting_quantity, F.text, F.text.func(lambda t: t not in _RESERVED_MENU_TEXTS))
 async def cart_process_new_quantity(message: Message, session: AsyncSession, lang: str, state: FSMContext, bot: Bot):
     if not message.text.strip().lstrip("-").isdigit():
         await message.answer(get_text("only_numbers", lang))

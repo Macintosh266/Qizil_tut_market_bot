@@ -32,10 +32,9 @@ router = Router(name="shopping")
 # bu matn qidiruv so'rovi sifatida QABUL QILINMASLIGI kerak.
 _RESERVED_MENU_TEXTS = frozenset(
     get_text(key, lang)
-    for key in ("menu_shopping", "menu_cart", "menu_profile", "menu_settings")
+    for key in ("menu_shopping", "menu_cart", "menu_profile", "menu_settings", "menu_feedback")
     for lang in ("uz", "ru", "en")
 ) | frozenset(get_employe_text("admin_menu", lang) for lang in ("uz", "ru", "en"))
-
 # Bitta sahifada nechta mahsulot ko'rsatilishi. 10 tadan ko'p bo'lsa,
 # ◀️ 1/2 ▶️ ko'rinishidagi sahifalash (pagination) ishga tushadi.
 PAGE_SIZE = 10
@@ -131,6 +130,17 @@ async def show_categories(callback: CallbackQuery, session: AsyncSession, lang: 
     — to'g'ridan-to'g'ri, hech qanday oraliq tugmasiz chiqadi.
     """
     market_id = int(callback.data.split(":")[1])
+
+    all_products = await get_products_by_market(session, market_id)
+    if not all_products:
+        try:
+            await callback.message.delete()
+        except Exception:
+            pass
+        await callback.message.answer(get_text("market_empty", lang))
+        await callback.answer()
+        return
+    
     # Yangi do'kon — avvalgi "joriy mahsulotlar xabari" iznini tozalaymiz,
     # shunda yangi ro'yxat albatta YANGI xabar sifatida yuboriladi.
     await state.set_data({})

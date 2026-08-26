@@ -656,9 +656,24 @@ LEXICON_EMPLOYE: dict[str, dict[str, str]] = {
 
     # ========== BUYURTMA MATNLARI ==========
     "new_order_notify": {
-        "uz": "🆕 Yangi buyurtma #{order_id}\nMijoz: {name}\nTelefon: {phone}\n\n📦 Mahsulotlar:\n{items}\n\nSumma: {total}",
-        "ru": "🆕 Новый заказ #{order_id}\nКлиент: {name}\nТелефон: {phone}\n\n📦 Товары:\n{items}\n\nСумма: {total}",
-        "en": "🆕 New order #{order_id}\nCustomer: {name}\nPhone: {phone}\n\n📦 Items:\n{items}\n\nTotal: {total}",
+        "uz": "🆕 Yangi buyurtma #{order_id}\nMijoz: {name}\nTelefon: {phone}\n{delivery_info}\n📦 Mahsulotlar:\n{items}\n\nSumma: {total}",
+        "ru": "🆕 Новый заказ #{order_id}\nКлиент: {name}\nТелефон: {phone}\n{delivery_info}\n📦 Товары:\n{items}\n\nСумма: {total}",
+        "en": "🆕 New order #{order_id}\nCustomer: {name}\nPhone: {phone}\n{delivery_info}\n📦 Items:\n{items}\n\nTotal: {total}",
+    },
+    "delivery_info_pickup": {
+        "uz": "🚶 Yetkazib berish turi: O'zi olib ketadi\n",
+        "ru": "🚶 Способ получения: Заберёт сам\n",
+        "en": "🚶 Delivery type: Pickup\n",
+    },
+    "delivery_info_delivery": {
+        "uz": "🚚 Yetkazib berish turi: Yetkazib berish\n📍 Manzil: {address}\n",
+        "ru": "🚚 Способ получения: Доставка\n📍 Адрес: {address}\n",
+        "en": "🚚 Delivery type: Delivery\n📍 Address: {address}\n",
+    },
+    "delivery_info_delivery_location": {
+        "uz": "🚚 Yetkazib berish turi: Yetkazib berish (lokatsiya yuborilgan, pastga qarang)\n",
+        "ru": "🚚 Способ получения: Доставка (геолокация отправлена ниже)\n",
+        "en": "🚚 Delivery type: Delivery (location sent below)\n",
     },
     "accept_order_btn": {
         "uz": "✅ Qabul qilish",

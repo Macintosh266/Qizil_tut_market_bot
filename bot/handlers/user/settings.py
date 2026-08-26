@@ -19,8 +19,18 @@ from bot.keyboards.user_kb import (
 from bot.lexicons import get_text
 from bot.models import UserModel
 from bot.states import SettingsStates
+from bot.lexicons.lexicon_employe import get_employe_text
 
 router = Router(name="settings")
+
+
+_RESERVED_MENU_TEXTS = frozenset(
+    get_text(key, lang)
+    for key in ("menu_shopping", "menu_cart", "menu_profile", "menu_settings", "menu_feedback")
+    for lang in ("uz", "ru", "en")
+) | frozenset(get_employe_text("admin_menu", lang) for lang in ("uz", "ru", "en"))
+ 
+ 
 
 
 def _return_kb(lang: str, db_user: UserModel):
@@ -91,7 +101,7 @@ async def save_new_address_from_location(
     await message.answer(get_text("saved", lang), reply_markup=_return_kb(lang, db_user))
 
 
-@router.message(SettingsStates.waiting_new_address, F.text)
+@router.message(SettingsStates.waiting_new_address, F.text, F.text.func(lambda t: t not in _RESERVED_MENU_TEXTS))
 async def save_new_address(message: Message, session: AsyncSession, lang: str, state: FSMContext, db_user: UserModel):
     await set_user_address(session, db_user.id, message.text.strip())
     await state.clear()
@@ -106,7 +116,7 @@ async def ask_new_name(callback: CallbackQuery, state: FSMContext, lang: str):
     await callback.answer()
 
 
-@router.message(SettingsStates.waiting_new_name, F.text)
+@router.message(SettingsStates.waiting_new_name, F.text, F.text.func(lambda t: t not in _RESERVED_MENU_TEXTS))
 async def save_new_name(message: Message, session: AsyncSession, lang: str, state: FSMContext, db_user: UserModel):
     await update_user_name(session, db_user, message.text.strip())
     await state.clear()

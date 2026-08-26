@@ -14,10 +14,7 @@ from bot.handlers.common.others import router as other_router
 
 def get_main_router() -> Router:
     router = Router(name="main")
-    # Tartib muhim: /start va /help har qanday holatda (hatto admin panel
-    # FSM jarayonida "qotib qolingan" bo'lsa ham) ishlashi kerak, shuning
-    # uchun common router BIRINCHI bo'lib tekshiriladi. Undan keyin
-    # admin komandalar (IsAdmin filter bilan himoyalangan), so'ng xaridor oqimi.
+
     router.include_router(get_common_router())
     router.include_router(get_admin_router())
     # STAFF funksiyasi vaqtincha uzib qo'yilgan — yuqoridagi izohga qarang

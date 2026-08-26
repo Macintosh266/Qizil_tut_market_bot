@@ -1,8 +1,8 @@
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from bot.database.repository.product_repo import decrease_stock, get_product
+from bot.database.repository.product_repo import decrease_stock, get_product, increase_stock
 from bot.enums.enum import DeliveryType, OrderStatus
 from bot.models import OrderItemModel, OrderModel, StatisticModel
 
@@ -75,7 +75,10 @@ async def create_order_with_statistics(
 async def get_order(session: AsyncSession, order_id: int) -> OrderModel | None:
     result = await session.execute(
         select(OrderModel)
-        .options(selectinload(OrderModel.items).selectinload(OrderItemModel.product))
+        .options(
+            selectinload(OrderModel.items).selectinload(OrderItemModel.product),
+            selectinload(OrderModel.user),
+        )
         .where(OrderModel.id == order_id)
     )
     return result.scalar_one_or_none()
@@ -126,12 +129,31 @@ async def accept_order(session: AsyncSession, order_id: int, staff_user_id: int)
 
 
 async def reject_order(session: AsyncSession, order_id: int) -> bool:
-    """True — muvaffaqiyatli rad etildi, False — buyurtma topilmadi yoki allaqachon boshqa holatda."""
-    order = await session.get(OrderModel, order_id)
+    """True — muvaffaqiyatli rad etildi, False — buyurtma topilmadi yoki allaqachon boshqa holatda.
+
+    Buyurtma yaratilganda ombordagi son darhol kamaytirilib, statistika
+    yozuvi yaratilgan edi (mijoz tasdiqlagan zahoti, admin javobidan oldin).
+    Endi rad etilganda buni ORTGA QAYTARAMIZ: har bir mahsulotning
+    ombordagi sonini tiklaymiz va shu buyurtmaga tegishli statistika
+    yozuvlarini o'chiramiz — aks holda sotilmagan mahsulot statistikada
+    "sotilgan" bo'lib qolar edi.
+    """
+    result = await session.execute(
+        select(OrderModel)
+        .options(selectinload(OrderModel.items).selectinload(OrderItemModel.product))
+        .where(OrderModel.id == order_id)
+    )
+    order = result.scalar_one_or_none()
     if not order:
         return False
     if order.status != OrderStatus.NEW:
         return False
+
+    for item in order.items:
+        if item.product:
+            await increase_stock(session, item.product, item.quantity)
+
+    await session.execute(delete(StatisticModel).where(StatisticModel.order_id == order_id))
 
     order.status = OrderStatus.CANCELED
     await session.commit()

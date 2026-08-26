@@ -139,6 +139,17 @@ async def confirm_order(callback: CallbackQuery, state: FSMContext, session: Asy
     items_lines = [f"• {item.product.name} x{item.quantity}" for item in order.items if item.product]
     items_text = "\n".join(items_lines) if items_lines else "-"
 
+    # Yetkazib berish turi (o'zi olib ketadi / yetkazib beriladi) va, agar
+    # manzil YOZUV bilan kiritilgan bo'lsa (lokatsiya orqali emas), uni ham
+    # bildirishnomaga qo'shamiz.
+    if order.delivery_type == DeliveryType.PICKUP:
+        delivery_info = get_employe_text("delivery_info_pickup", "uz")
+    elif order.latitude is not None and order.longitude is not None:
+        # Manzil xaritadan (lokatsiya) yuborilgan — pastda alohida send_location bor
+        delivery_info = get_employe_text("delivery_info_delivery_location", "uz")
+    else:
+        delivery_info = get_employe_text("delivery_info_delivery", "uz", address=order.address or "-")
+
     # Ishchi/adminlarga xabar (super-admin ID'lariga + bazadagi barcha STAFF/ADMIN'larga yuborilishi mumkin;
     # soddalik uchun bu yerda super-adminlarga yuboriladi)
     bot = callback.bot
@@ -152,6 +163,7 @@ async def confirm_order(callback: CallbackQuery, state: FSMContext, session: Asy
                     order_id=order.id,
                     name=db_user.full_name,
                     phone=db_user.phone_number or "-",
+                    delivery_info=delivery_info,
                     items=items_text,
                     total=f"{order.total_price:,.0f}",
                 ),
