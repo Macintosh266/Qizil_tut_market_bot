@@ -1,118 +1,139 @@
-# 🛍 Online Market Telegram Bot
+# 🌳 Qizil Tut | Baraka — Telegram Market Bot
 
 **Texnologiyalar:** aiogram 3.x · SQLAlchemy 2.0 (async, class-based modellar) · PostgreSQL (psycopg3) · Redis · Docker Compose
 
-Ko'p tillik (🇺🇿 o'zbek, 🇷🇺 rus, 🇬🇧 ingliz), uch xil panel: **Xaridor**, **Ishchi**, **Admin**.
+Ko'p do'konli onlayn-savdo boti. Ko'p tillik (🇺🇿 o'zbek, 🇷🇺 rus, 🇬🇧 ingliz), uch xil rol: **Xaridor**, **Admin** (do'kon darajasida yoki super-admin), **Ishchi** (hozircha uzib qo'yilgan — pastga qarang).
 
 ## Loyiha tuzilishi
 
-```
-online_market_bot/
+qizil_tut_market_bot/
 ├── bot/
-│   ├── config.py               # .env sozlamalari
-│   ├── enums/enum.py           # UserRole, Language, OrderStatus, DeliveryType
-│   ├── models/                 # SQLAlchemy class-based modellar
-│   │   ├── abstract_models.py  # BaseModels (create_data/update_data)
-│   │   ├── user_model.py       # UserModel, Address
-│   │   ├── market_model.py     # MarketModel
-│   │   ├── category_model.py   # CategoryModel (self-referential)
-│   │   ├── product_model.py    # ProductsModel
-│   │   ├── order_model.py      # OrderModel, OrderItemModel
-│   │   └── statistic_model.py  # StatisticModel (har bir sotuv uchun log)
-│   ├── database/
-│   │   ├── engine.py           # async engine/session, init_db()
-│   │   └── repository/         # CRUD funksiyalar (domen bo'yicha bo'lingan)
-│   ├── redis/redis_client.py   # Savat (cart) — Redis hash
-│   ├── i18n/                   # uz/ru/en tarjimalar (dictionary-based)
-│   ├── states/states.py        # FSM holatlari
-│   ├── keyboards/               # Inline/Reply klaviaturalar
-│   ├── filters/role_filters.py # IsAdmin, IsStaff
-│   ├── middlewares/
-│   │   ├── database.py         # har update uchun DB session
-│   │   └── user_context.py     # db_user, lang, ban tekshiruvi
-│   ├── utils/
-│   │   ├── args.py             # qo'shtirnoqli argumentlarni ajratish
-│   │   └── period.py           # /statistic sana formatlarini tahlil qilish
-│   └── handlers/
-│       ├── common/start.py     # /start, til tanlash, ro'yxatdan o'tish, /help
-│       ├── user/               # xarid, savat, checkout, profil, sozlamalar
-│       ├── admin/              # barcha admin buyruqlari
-│       └── staff/orders.py     # buyurtmani qabul qilish
+│ ├── config.py # .env sozlamalari
+│ ├── enums/enum.py # UserRole, Language, OrderStatus, DeliveryType
+│ ├── models/ # SQLAlchemy class-based modellar
+│ │ ├── abstract_models.py # BaseModels (create_data/update_data)
+│ │ ├── user_model.py # UserModel, Address
+│ │ ├── market_model.py # MarketModel
+│ │ ├── category_model.py # CategoryModel
+│ │ ├── brand_model.py # BrandModel (mahsulot brendi, ixtiyoriy)
+│ │ ├── product_model.py # ProductsModel
+│ │ ├── order_model.py # OrderModel, OrderItemModel
+│ │ ├── statistic_model.py # StatisticModel (har bir sotuv uchun log)
+│ │ └── feedback_model.py # FeedbackModel (foydalanuvchi fikrlari)
+│ ├── database/
+│ │ ├── engine.py # async engine/session, init_db()
+│ │ └── repository/ # CRUD funksiyalar (domen bo'yicha bo'lingan)
+│ ├── redis/redis_client.py # Savat (cart) — Redis hash
+│ ├── lexicons/ # uz/ru/en tarjimalar (dictionary-based)
+│ ├── states/states.py # FSM holatlari
+│ ├── keyboards/ # Inline/Reply klaviaturalar
+│ ├── filters/role_filters.py # IsAdmin, IsSuperAdmin, IsStaff
+│ ├── middlewares/
+│ │ ├── database.py # har update uchun DB session
+│ │ └── user_context.py # db_user, lang, ban tekshiruvi
+│ ├── utils/
+│ │ ├── args.py # qo'shtirnoqli argumentlarni ajratish
+│ │ ├── commands.py # rolga qarab bot komandalarini sozlash
+│ │ └── period.py # statistika sana formatlarini tahlil qilish
+│ ├── assets/logo.jpg # /start'da ko'rsatiladigan logotip
+│ └── handlers/
+│ ├── common/ # /start, til tanlash, ro'yxatdan o'tish, /help
+│ ├── user/ # xarid, savat, checkout, profil, sozlamalar, fikr
+│ ├── admin/ # mahsulot/kategoriya/brend/do'kon/ban/statistika/buyurtma
+│ └── staff/orders.py # buyurtma qabul qilish (hozircha ulanmagan)
+├── sql/add_brand_and_feedback.sql # mavjud bazaga qo'shimcha ustun/jadval qo'shish uchun
 ├── main.py
 ├── requirements.txt
 ├── docker-compose.yml
 └── .env.example
-```
+
 
 ## Texnologiyalar nima uchun ishlatilgan
 
-- **PostgreSQL + SQLAlchemy (async, psycopg3)** — barcha doimiy ma'lumotlar: foydalanuvchilar, do'konlar, kategoriyalar, mahsulotlar, buyurtmalar, statistika.
-- **Redis** — foydalanuvchi savati (`cart:{user_id}` hash, tez-tez o'zgaradigan vaqtinchalik ma'lumot) va aiogram FSM Storage (bot qayta ishga tushsa ham checkout/registratsiya jarayoni yo'qolmasligi uchun).
+- **PostgreSQL + SQLAlchemy (async, psycopg3)** — barcha doimiy ma'lumotlar: foydalanuvchilar, do'konlar, kategoriyalar, brendlar, mahsulotlar, buyurtmalar, statistika, fikrlar.
+- **Redis** — foydalanuvchi savati (`cart:{user_id}` hash) va aiogram FSM Storage (bot qayta ishga tushsa ham checkout/registratsiya jarayoni yo'qolmasligi uchun).
 - **aiogram 3.x** — Router, Filter (F), FSM, middleware asosida modulli arxitektura.
 - **Docker Compose** — PostgreSQL va Redis'ni bir buyruq bilan ko'tarish uchun.
 
 ## O'rnatish
 
 ```bash
-cd online_market_bot
+cd qizil_tut_market_bot
 python3 -m venv venv
 source venv/bin/activate          # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 cp .env.example .env
 # .env faylni oching: BOT_TOKEN va SUPER_ADMIN_IDS ni to'ldiring
-# (SUPER_ADMIN_IDS - botni birinchi /start qilganda avtomatik ADMIN bo'ladigan ID'lar)
+# (SUPER_ADMIN_IDS — botni birinchi /start qilganda avtomatik SUPER_ADMIN bo'ladigan ID'lar)
 
 docker compose --env-file .env up -d   # Postgres + Redis
 
 python main.py
 ```
 
-Birinchi ishga tushganda jadvallar avtomatik yaratiladi (`init_db()`). Production uchun Alembic migratsiyalariga o'tish tavsiya etiladi.
+Birinchi ishga tushganda jadvallar avtomatik yaratiladi (`init_db()` → `create_all()`). Agar loyihani **allaqachon ishlab turgan** bazaga o'rnatayotgan bo'lsangiz (masalan brend/fikr funksiyasi qo'shilgandan keyin), `create_all()` yangi jadval qo'shadi, lekin mavjud jadvalga yangi ustun qo'shib bermaydi — bunday holatda `sql/add_brand_and_feedback.sql` skriptini bir marta qo'lda ishga tushiring:
 
-## Buyruqlar
-
-**Hammaga:**
-- `/start` — ro'yxatdan o'tish / botni boshlash
-- `/help` — yordam (rolga qarab moslashadi)
-
-**Faqat Admin** (`.env` dagi `SUPER_ADMIN_IDS` yoki `/add_admin` orqali tayinlanganlar):
-```
-/add_admin <user_id yoki username>
-/delete_admin <user_id yoki username>
-/add_staff <user_id yoki username>
-/delete_staff <user_id yoki username>
-/ban <user_id yoki username>
-/unban <user_id yoki username>
-/add_market "Do'kon nomi" "Do'kon manzili"
-/delete_market "Do'kon nomi"
-/add_product "Do'kon nomi" "Mahsulot nomi" <soni> <narhi> ["Kategoriya"]
-/delete_product "Do'kon nomi" "Mahsulot nomi"
-/statistic <kun.oy.yil | oy.yil | yil>     masalan: /statistic 11.08.2026
+```bash
+docker exec -i <postgres_container> psql -U <user> -d <database> < sql/add_brand_and_feedback.sql
 ```
 
-> Ko'p so'zli nomlar (do'kon/mahsulot) qo'shtirnoq ichida yozilishi kerak — buyruq argumentlari `shlex` orqali ajratiladi (`bot/utils/args.py`).
+Skript idempotent (bir necha marta ishga tushirsangiz ham xavfsiz). Production uchun Alembic migratsiyalariga o'tish tavsiya etiladi (`requirements.txt`da bor, lekin hali sozlanmagan).
 
-**Xaridor menyusi (tugmalar orqali):**
-- 🛍 Xarid qilish → do'kon → kategoriya (yoki qidiruv) → mahsulot → miqdor → savat
-- 🛒 Savat → miqdorni ➕/➖ o'zgartirish, ❌ o'chirish, buyurtma qilish (🚶 o'zi olib ketish / 🚚 yetkazib berish)
-- 👤 Profil — ID, ism, username, til, telefon, manzil
-- ⚙️ Sozlamalar — til, manzil, ism o'zgartirish
+## Rollar
 
-**Ishchi:** yangi buyurtma tushganda xabar keladi (hozircha `SUPER_ADMIN_IDS`ga yuboriladi — pastdagi eslatmaga qarang), "✅ Qabul qilish" tugmasi bilan buyurtmani o'ziga biriktiradi.
+| Rol | Huquqi |
+|---|---|
+| **USER** | oddiy xaridor |
+| **ADMIN** | bitta do'konga bog'langan — o'sha do'kon mahsulotlari, statistikasi, ban |
+| **SUPER_ADMIN** | barcha do'konlar + admin/do'kon/kategoriya/brend boshqaruvi |
+| **STAFF** | hozircha **uzib qo'yilgan** (kod saqlangan, router ulanmagan) — pastga qarang |
 
-## Statistic modeli — muhim arxitektura qarori
+## Xaridor oqimi
 
-`StatisticModel` — bu **oldindan hisoblangan yig'indi emas**, balki **har bir sotilgan mahsulot uchun alohida log yozuvi**. Sabab: `/statistic` istalgan davr (kun/oy/yil) uchun ishlashi kerak; log jadvali bo'lsa, istalgan davr uchun oddiy `SUM()/GROUP BY` bilan javob olinadi — oldindan hisoblab qo'yilgan raqamni har safar qayta hisoblash shart bo'lmaydi.
+1. **🛍 Xarid qilish** → do'konni tanlash
+2. Do'kon tanlangach — **brendlar** qatori, **kategoriyalar** qatori va **mahsulotlar ro'yxati** (nomi — narxi tugmalari) ketma-ket chiqadi
+   - Ro'yxat rasmsiz, tugma ko'rinishida; 10 tadan ko'p mahsulot bo'lsa `◀️ 1/2 ▶️` sahifalash paydo bo'ladi — sahifa almashtirilganda xabar qayta yuborilmaydi, mavjudi tahrirlanadi
+   - Kategoriya yoki brend tugmasi bosilsa, xuddi shu ro'yxat filtrlangan holda yangilanadi
+   - Yozib qidirish ham ishlaydi (ro'yxat o'rniga so'rov natijalari chiqadi)
+3. Mahsulot tanlansa — **rasm + tavsif + narx + omborda soni**, hamda 🛒 savatga qo'shish va miqdorni ➕/➖ yoki tugmani bosib qo'lda kiritish imkoniyati bilan ochiladi
+4. **🛒 Savat** → miqdorni o'zgartirish/o'chirish, **✅ Buyurtma qilish**
+5. Yetkazib berish turi: 🚶 o'zi olib ketish yoki 🚚 yetkazib berish (manzil — matn yoki xaritadan lokatsiya)
+6. Buyurtma tasdiqlangach, **super-adminlarga** mahsulotlar ro'yxati, rasmlari va yetkazib berish ma'lumoti (manzil/lokatsiya) bilan bildirishnoma boradi, ular ✅ **Qabul qilish** / ❌ **Rad etish** tugmalari orqali javob beradi
+7. Admin javobidan so'ng **mijozga ham xabar** boradi ("qabul qilindi" / "rad etildi")
+8. **💬 Fikr bildirish** — istalgan vaqtda matn yozib fikr/taklif/shikoyat qoldirish mumkin
 
-Yozuv **buyurtma checkout qilinganda** (`create_order_with_statistics`) yaratiladi va shu paytda mahsulot ombordagi soni ham kamayadi.
+## Admin panel (reply-klaviatura bo'limlari)
 
-## Bilib qo'yish kerak bo'lgan soddalashtirishlar (keyingi qadamlar)
+- **📦 Mahsulotlar** — qo'shish (brend → kategoriya → rasm ketma-ketligida, tugma orqali tanlab yoki "+ Yangi" bilan joyida qo'shib), tahrirlash, o'chirish, ro'yxat
+- **🗂 Kategoriyalar** / **🏷 Brendlar** — qo'shish, o'chirish, ro'yxat (faqat SUPER_ADMIN; mahsulotli kategoriyani o'chirish bloklanadi)
+- **🏪 Do'konlar** / **👤 Adminlar** — faqat SUPER_ADMIN
+- **🚫 Ban** — foydalanuvchini bloklash/blokdan chiqarish
+- **📊 Statistika** — tayyor davrlar (bugun/hafta/oy/yil) yoki qo'lda kiritilgan sana oralig'i bo'yicha savdo hisoboti
+- **💬 Fikrlar** — foydalanuvchilar qoldirgan fikrlarni birma-bir ko'rish va "ko'rib chiqildi" deb belgilash
 
-Loyiha hajmi katta bo'lgani uchun quyidagilar **soddalashtirilgan holda** ishlaydi — production'ga chiqarishdan oldin kengaytirish tavsiya etiladi:
+## Buyurtmani qabul/rad qilish
 
-1. **Yangi buyurtma xabarnomasi** hozircha faqat `.env`dagi `SUPER_ADMIN_IDS`ga yuboriladi. To'g'ri yechim: bazadagi barcha `STAFF`/`ADMIN` rolidagi foydalanuvchilarga yuborish (`get_user_by_id_or_username` kabi yangi repository funksiyasi kerak).
-2. **Statistika do'kon kesimida emas, umumiy** hisoblanadi (`get_period_statistics`). Kerak bo'lsa `market_id` bo'yicha filtr qo'shish oson (`statistic_repo.py`ga parametr qo'shiladi).
-3. **Ombordagi mahsulot yetarliligi** faqat savatga qo'shishda tekshiriladi, checkout paytida qayta tekshirilmaydi — bir vaqtning o'zida bir nechta xaridor bir xil mahsulotni sotib olsa, nazariy jihatdan "manfiy stock" yuzaga kelishi mumkin (kam ehtimol, lekin production'da `SELECT ... FOR UPDATE` yoki optimistik lock qo'shish tavsiya etiladi).
-4. **Alembic** hozircha ulanmagan — `init_db()` faqat `create_all()` qiladi. Sxema o'zgarganda avtomatik migratsiya yo'q.
-5. **Kategoriya-do'kon bog'lanishi** faqat mahsulot orqali ("shu do'konda shu kategoriyada mahsulot bormi") — agar bo'sh kategoriyalarni ham do'konga ochiq-oydin biriktirish kerak bo'lsa, `CategoryModel`ga `market_id` qo'shish kerak bo'ladi.
+Yangi buyurtma bildirishnomasidagi tugmalarni **admin va super-admin** bosishi mumkin (`bot/handlers/staff/orders.py`, `IsAdmin` filtri bilan — nomiga qaramay, endi staff emas, admin uchun ishlaydi). Qabul qilinganda buyurtma holati o'zgaradi; rad etilganda esa **ombordagi son qaytariladi** va statistika yozuvi o'chiriladi (chunki sotuv haqiqatda amalga oshmagan).
+
+## STAFF funksiyasi haqida
+
+STAFF roli va uning buyurtma-qabul-qilish paneli **kod darajasida to'liq saqlangan**, faqat quyidagi ikkita joyda router ulanishi izohga olingan:
+
+- `bot/handlers/__init__.py` — `get_staff_router()` chaqiruvi
+- `bot/handlers/admin/__init__.py` — "Xodimlar boshqaruvi" bo'limi
+
+Qayta yoqish uchun shu ikki joydagi izohlarni ochish kifoya.
+
+## `StatisticModel` — muhim arxitektura qarori
+
+`StatisticModel` — bu **oldindan hisoblangan yig'indi emas**, balki **har bir sotilgan mahsulot uchun alohida log yozuvi**. Sabab: statistika istalgan davr (kun/oy/yil) uchun ishlashi kerak; log jadvali bo'lsa, istalgan davr uchun oddiy `SUM()/GROUP BY` bilan javob olinadi.
+
+Yozuv buyurtma **tasdiqlanganda** (`create_order_with_statistics`) yaratiladi va shu paytda ombordagi son ham kamayadi — bu, boshqa xaridor xuddi shu mahsulotni sotib olib qo'ymasin uchun, mahsulotni "band qilib qo'yish" mantig'i. Agar admin keyin buyurtmani **rad etsa**, `reject_order()` bu ikkalasini (ombor va statistika) ortga qaytaradi.
+
+## Bilib qo'yish kerak bo'lgan soddalashtirishlar
+
+1. **Statistika do'kon kesimida emas, umumiy** hisoblanadi. Kerak bo'lsa `market_id` bo'yicha filtr qo'shish oson (`statistic_repo.py`).
+2. **Ombordagi mahsulot yetarliligi** parallel so'rovlarda `SELECT ... FOR UPDATE` yoki optimistik lock bilan himoyalanmagan — nazariy jihatdan bir vaqtning o'zida ikki xaridor bir xil mahsulotni sotib olishga urinishi mumkin (kam ehtimol, lekin production'da e'tiborga olish tavsiya etiladi).
+3. **Alembic** hali sozlanmagan — `init_db()` faqat `create_all()` qiladi, mavjud jadvalga ustun qo'shmaydi (shu sabab `sql/` papkasidagi qo'lda skript bor).
+4. **Kategoriya-do'kon bog'lanishi** faqat mahsulot orqali aniqlanadi ("shu do'konda shu kategoriyada mahsulot bormi") — kategoriyaning o'zi global, do'konga qattiq bog'lanmagan.
