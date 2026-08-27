@@ -87,10 +87,8 @@ _ALL_WAITING_STATES = [
 CANCEL_TEXTS = frozenset(get_employe_text("cancel_btn", l) for l in ("uz", "ru", "en"))
 CONFIRM_TEXTS = frozenset(get_employe_text("confirm_btn", l) for l in ("uz", "ru", "en"))
 
-# Admin panelning BARCHA tugma matnlari (uch tilda) — qidiruv holatida bo'lsa
-# ham, bu matnlar hech qachon "qidiruv so'rovi" sifatida qabul qilinmasligi
-# kerak, aks holda masalan "📋 Adminlar ro'yxati" tugmasi bosilganda u ism
-# bo'yicha qidiruv deb tushunilib, "Hech narsa topilmadi" xatosi chiqadi.
+# Admin panelning BARCHA tugma matnlari (uch tilda) — qidiruv holatida ham
+# bu matnlar so'rov sifatida qabul qilinmasligi kerak.
 _ALL_ADMIN_BUTTON_KEYS = [
     "admin_menu", "admin_management_btn", "staff_management_btn", "ban_management_btn",
     "market_management_btn", "product_management_btn", "statistics_btn", "back_btn",
@@ -190,10 +188,8 @@ async def clear_tracked_list(bot: Bot, state: FSMContext) -> None:
 
 
 # ==================== NAVIGATSIYA ====================
-# Diqqat: har bir navigatsiya handleri FSM *holatini* ham tozalaydi
-# (state.set_state(None)), aks holda oldingi bosqichda qolib ketgan
-# holat (masalan "qidirish" yoki "yangi nom kutish") keyingi menyu
-# tugmalarini ham "noto'g'ri kiritilgan qiymat" deb tushunib qolishi mumkin.
+# Har bir handler FSM holatini ham tozalaydi (set_state(None)) — aks holda
+# eski holat keyingi tugmalarni ham noto'g'ri kiritilgan qiymat deb qoladi.
 
 @router.message(F.text.func(lambda t: t in btn_texts("admin_menu")))
 async def show_admin_panel(message: Message, state: FSMContext, lang: str, db_user: UserModel):
@@ -213,12 +209,8 @@ async def open_admin_management(message: Message, state: FSMContext, lang: str):
 
 @router.message(F.text.func(lambda t: t in btn_texts("staff_management_btn")))
 async def open_staff_management(message: Message, state: FSMContext, lang: str):
-    # STAFF (Xodimlar) boshqaruvi VAQTINCHA UZIB QO'YILGAN — bu handler kod
-    # darajasida saqlanib qolgan, lekin tugma admin_panel_kb/market_admin_panel_kb
-    # menyularidan olib tashlangani uchun (bot/keyboards/admin_kb.py) va
-    # staff.py routeri ulanmagani uchun (bot/handlers/admin/__init__.py)
-    # amalda ishga tushmaydi. To'liq qayta yoqish uchun o'sha ikki joyni
-    # ham qayta yoqish kerak.
+    # STAFF boshqaruvi vaqtincha uzib qo'yilgan — tugma menyuda ko'rinmaydi
+    # va staff.py routeri ulanmagan, shuning uchun bu handler amalda ishlamaydi.
     await state.set_state(None)
     await state.update_data(menu_level="staff_mgmt")
     await message.answer(get_employe_text("staff_management_btn", lang), reply_markup=staff_management_kb(lang))

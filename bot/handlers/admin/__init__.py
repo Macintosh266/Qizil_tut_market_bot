@@ -10,10 +10,9 @@ from bot.handlers.admin.markets import router as markets_router
 from bot.handlers.staff.orders import router as orders_router
 from bot.handlers.admin.products import router as products_router
 
-# STAFF (Xodimlar) boshqaruvi VAQTINCHA UZIB QO'YILGAN — kod o'chirilmagan,
-# faqat ulanmagan. Qayta yoqish uchun pastdagi import va include_router
-# qatorlarini izohdan chiqaring (va bot/handlers/__init__.py dagi
-# get_staff_router() ni ham qayta yoqing).
+# STAFF boshqaruvi vaqtincha uzib qo'yilgan — kod o'chirilmagan, faqat
+# ulanmagan. Qayta yoqish: pastdagi import/include_router'ni ochish va
+# bot/handlers/__init__.py'dagi get_staff_router()ni ham qayta yoqish.
 # from bot.handlers.admin.staff import router as staff_router
 from bot.handlers.admin.statistics import router as statistics_router
 
@@ -22,7 +21,7 @@ def get_admin_router() -> Router:
     router = Router(name="admin")
     router.include_router(base_router)
     router.include_router(admins_router)
-    # STAFF boshqaruvi vaqtincha uzib qo'yilgan — yuqoridagi izohga qarang
+    # STAFF boshqaruvi vaqtincha uzib qo'yilgan
     # router.include_router(staff_router)
     router.include_router(ban_router)
     router.include_router(markets_router)

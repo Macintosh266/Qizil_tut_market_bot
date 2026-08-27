@@ -36,12 +36,11 @@ async def choose_delivery(callback: CallbackQuery, state: FSMContext, session: A
     delivery_type = callback.data.split(":")[1]  # "pickup" | "delivery"
     await state.update_data(delivery_type=delivery_type)
 
-    # Tanlov qilingandan so'ng tugmalar endi kerak emas — o'chirib tashlaymiz,
-    # aks holda foydalanuvchi qayta bosib, jarayonni chalkashtirib yuborishi mumkin
+    # Qayta bosib chalkashtirmasligi uchun tugmalarni o'chiramiz
     await callback.message.edit_reply_markup(reply_markup=None)
 
     if delivery_type == "delivery":
-        # foydalanuvchining saqlangan manzili bo'lsa taklif qilinadi, aks holda so'raladi
+        # saqlangan manzil bo'lsa taklif qilinadi, aks holda so'raladi
         db_user = await get_user_by_telegram_id(session, callback.from_user.id)
         active_address = await get_active_address(session, db_user.id) if db_user else None
         if active_address:
@@ -133,25 +132,20 @@ async def confirm_order(callback: CallbackQuery, state: FSMContext, session: Asy
         "📋", reply_markup=main_menu_kb(lang, is_admin=db_user.role in (UserRole.ADMIN, UserRole.SUPER_ADMIN))
     )
 
-    # Bildirishnomada mahsulotlar ro'yxatini ko'rsatish uchun buyurtmani
-    # items+product bilan birga (eager load) qayta o'qib olamiz
+    # Mahsulotlar ro'yxati uchun buyurtmani items+product bilan qayta o'qiymiz
     order = await get_order(session, order.id)
     items_lines = [f"• {item.product.name} x{item.quantity}" for item in order.items if item.product]
     items_text = "\n".join(items_lines) if items_lines else "-"
 
-    # Yetkazib berish turi (o'zi olib ketadi / yetkazib beriladi) va, agar
-    # manzil YOZUV bilan kiritilgan bo'lsa (lokatsiya orqali emas), uni ham
-    # bildirishnomaga qo'shamiz.
+    # Yetkazib berish turi va, manzil yozuv bilan kiritilgan bo'lsa, o'zi ham
     if order.delivery_type == DeliveryType.PICKUP:
         delivery_info = get_employe_text("delivery_info_pickup", "uz")
     elif order.latitude is not None and order.longitude is not None:
-        # Manzil xaritadan (lokatsiya) yuborilgan — pastda alohida send_location bor
-        delivery_info = get_employe_text("delivery_info_delivery_location", "uz")
+        delivery_info = get_employe_text("delivery_info_delivery_location", "uz")  # pastda send_location bor
     else:
         delivery_info = get_employe_text("delivery_info_delivery", "uz", address=order.address or "-")
 
-    # Ishchi/adminlarga xabar (super-admin ID'lariga + bazadagi barcha STAFF/ADMIN'larga yuborilishi mumkin;
-    # soddalik uchun bu yerda super-adminlarga yuboriladi)
+    # Super-adminlarga bildirishnoma
     bot = callback.bot
     for admin_id in settings.super_admin_ids:
         try:
@@ -172,7 +166,7 @@ async def confirm_order(callback: CallbackQuery, state: FSMContext, session: Asy
         except Exception:
             pass
 
-        # Buyurtmadagi har bir mahsulotning rasmini (mavjud bo'lsa) alohida yuboramiz
+        # Har bir mahsulot rasmini (mavjud bo'lsa) alohida yuboramiz
         for item in order.items:
             if not item.product or not item.product.image_file_id:
                 continue

@@ -1,21 +1,42 @@
-# Python / Virtual Environment
-.venv/
-venv/
-ENV/
-env/
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
 
-# Environment Variables (Maxfiy kalitlar va ma'lumotlar)
+# Virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+# Environment variables (maxfiy kalitlar)
 .env
+.env.*
 !.env.example
 
-# Git va IDE sozlamalari
-.git/
+# IDE / editor sozlamalari
 .vscode/
 .idea/
+*.swp
 
-# Boshqa vaqtinchalik fayllar
+# OS
+.DS_Store
+Thumbs.db
+
+# Loglar va vaqtinchalik fayllar
 *.log
 *.sqlite3
+*.db
+
+# Test / cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Build artefaktlari
+build/
+dist/
+*.egg-info/

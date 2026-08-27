@@ -8,10 +8,6 @@ from bot.models import UserModel
 
 router = Router(name="others")
 
-# DIQQAT: bu router ENG OXIRIDA ulanishi shart (bot/handlers/__init__.py'ga
-# qarang). Aks holda bu yerdagi "hammasini ushlab qoluvchi" handlerlar
-# boshqa (admin/staff/user) routerlardan OLDIN ishlab ketib, ularni
-# butunlay bloklab qo'yadi.
 
 
 @router.message()

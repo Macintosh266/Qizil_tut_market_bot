@@ -40,9 +40,8 @@ async def process_market_name(message: Message, session: AsyncSession, lang: str
         await message.answer(get_employe_text("market_name_exists", lang))
         return
 
-    # existing bo'lishi mumkin (avval o'chirilgan, is_active=False) — bo'lsa,
-    # keyingi bosqichda uni yangi manzil bilan qayta faollashtiramiz;
-    # bo'lmasa (existing is None), butunlay yangi do'kon yaratiladi.
+    # existing bo'lsa (avval o'chirilgan) — keyingi bosqichda qayta
+    # faollashtiramiz; bo'lmasa, yangi do'kon yaratiladi.
     await state.update_data(
         market_name=name,
         reactivate_market_id=existing.id if existing else None,

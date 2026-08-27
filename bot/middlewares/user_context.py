@@ -26,35 +26,22 @@ class UserContextMiddleware(BaseMiddleware):
         session = data["session"]
         tg_user: User | None = data.get("event_from_user")
 
-        # DEBUG: tg_user umuman topilyaptimi
-        logger.info("UserContextMiddleware: tg_user=%s", tg_user.id if tg_user else None)
-
         db_user = None
         if tg_user:
             db_user = await get_user_by_telegram_id(session, tg_user.id)
-
-        # DEBUG: db_user va uning is_banned qiymati
-        logger.info(
-            "UserContextMiddleware: db_user=%s is_banned=%s",
-            db_user.telegram_id if db_user else None,
-            db_user.is_banned if db_user else None,
-        )
 
         data["db_user"] = db_user
         data["lang"] = db_user.language.value if db_user else "uz"
 
         if db_user and db_user.is_banned:
-            logger.info("UserContextMiddleware: BAN aniqlandi, xabar yuborishga urinilmoqda")
             text = get_text("banned", data["lang"])
             try:
                 if isinstance(event, Message):
                     await event.answer(text)
                 elif isinstance(event, CallbackQuery):
                     await event.answer(text, show_alert=True)
-                logger.info("UserContextMiddleware: ban xabari muvaffaqiyatli yuborildi")
             except Exception:
-                # Xatoni endi YASHIRMAYMIZ — to'liq traceback konsolga chiqadi
-                logger.exception("UserContextMiddleware: ban xabarini yuborishda XATO")
+                logger.exception("Ban xabarini yuborishda xato")
             return None
 
         return await handler(event, data)

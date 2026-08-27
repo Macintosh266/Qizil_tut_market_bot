@@ -27,22 +27,18 @@ from bot.states import Shopping
 
 router = Router(name="shopping")
 
-# Asosiy menyu tugmalarining matni — foydalanuvchi biror holatda (masalan
-# Shopping.searching_product) bo'lganda ham, shu tugmalardan birini bossa,
-# bu matn qidiruv so'rovi sifatida QABUL QILINMASLIGI kerak.
+# Asosiy menyu tugmalari — qidiruv holatida ham so'rov sifatida qabul qilinmasin
 _RESERVED_MENU_TEXTS = frozenset(
     get_text(key, lang)
     for key in ("menu_shopping", "menu_cart", "menu_profile", "menu_settings", "menu_feedback")
     for lang in ("uz", "ru", "en")
 ) | frozenset(get_employe_text("admin_menu", lang) for lang in ("uz", "ru", "en"))
-# Bitta sahifada nechta mahsulot ko'rsatilishi. 10 tadan ko'p bo'lsa,
-# ◀️ 1/2 ▶️ ko'rinishidagi sahifalash (pagination) ishga tushadi.
-PAGE_SIZE = 10
+
+PAGE_SIZE = 10  # bitta sahifada nechta mahsulot (undan ko'p bo'lsa ◀️ 1/2 ▶️ chiqadi)
 
 
 def _paginate(items: list, page: int) -> tuple[list, int, int]:
-    """Ro'yxatni sahifalarga bo'ladi. Qaytaradi: (shu sahifadagi elementlar,
-    to'g'irlangan sahifa raqami, jami sahifalar soni)."""
+    """Qaytaradi: (shu sahifadagi elementlar, to'g'irlangan sahifa raqami, jami sahifalar soni)."""
     total_pages = max(1, (len(items) + PAGE_SIZE - 1) // PAGE_SIZE)
     page = max(0, min(page, total_pages - 1))
     start = page * PAGE_SIZE
@@ -52,10 +48,8 @@ def _paginate(items: list, page: int) -> tuple[list, int, int]:
 async def _get_filtered_products(
     session: AsyncSession, market_id: int, ftype: str, fid: int, state: FSMContext
 ) -> list:
-    """`ftype` bo'yicha mos mahsulotlar ro'yxatini qaytaradi:
-    "c" — kategoriya, "b" — brend, "s" — qidiruv natijasi (so'rov FSM
-    state'da saqlanadi, chunki callback_data ichida erkin matn saqlab
-    bo'lmaydi), aks holda ("a") — do'kondagi barcha mahsulotlar."""
+    """`ftype`: "c" — kategoriya, "b" — brend, "s" — qidiruv (so'rov FSM
+    state'da saqlanadi), aks holda ("a") — barcha mahsulotlar."""
     if ftype == "c":
         return await get_products_by_category(session, market_id, fid)
     if ftype == "b":
@@ -78,15 +72,10 @@ async def _show_products(
     fid: int,
     page: int,
 ) -> None:
-    """
-    Mahsulotlar ro'yxatini (nomi — narxi tugmalari, rasmsiz, sahifalangan)
-    ko'rsatadi. FSM state'da saqlangan "joriy mahsulotlar xabari"
-    (products_chat_id/products_message_id) BOR bo'lsa — o'sha xabar
-    TAHRIRLANADI (filtr yoki sahifa o'zgarganda ham yangi xabar
-    yuborilmaydi). Agar hali bunday xabar bo'lmasa (yoki uni tahrirlab
-    bo'lmasa — masalan o'chirilgan bo'lsa), `send_target` orqali yangi
-    xabar yuboriladi va uning id'si state'ga yozib qo'yiladi.
-    """
+    """Mahsulotlar ro'yxatini (rasmsiz, tugma ko'rinishida, sahifalangan)
+    ko'rsatadi. Agar oldingi ro'yxat xabari state'da saqlangan bo'lsa —
+    o'sha xabar TAHRIRLANADI (yangi yuborilmaydi). Aks holda `send_target`
+    orqali yangi xabar yuboriladi va uning id'si state'ga yozib qo'yiladi."""
     products = await _get_filtered_products(session, market_id, ftype, fid, state)
 
     if not products:
@@ -106,7 +95,7 @@ async def _show_products(
             await bot.edit_message_text(text, chat_id=chat_id, message_id=message_id, reply_markup=keyboard)
             return
         except Exception:
-            pass  # xabar topilmadi/tahrirlab bo'lmadi — pastda yangisini yuboramiz
+            pass  # xabar topilmadi — pastda yangisini yuboramiz
 
     sent = await send_target.answer(text, reply_markup=keyboard)
     await state.update_data(products_chat_id=sent.chat.id, products_message_id=sent.message_id)
@@ -124,11 +113,8 @@ async def show_markets(message: Message, session: AsyncSession, lang: str, state
 
 @router.callback_query(F.data.startswith("market:"))
 async def show_categories(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext, bot: Bot):
-    """
-    Do'kon tanlangandan keyin — shu ketma-ketlikda: 1) brendlar, 2)
-    kategoriyalar, 3) mahsulotlar (rasmsiz, tugma ko'rinishida, sahifalangan)
-    — to'g'ridan-to'g'ri, hech qanday oraliq tugmasiz chiqadi.
-    """
+    """Do'kon tanlangandan keyin ketma-ket: brendlar, kategoriyalar, so'ng
+    mahsulotlar (rasmsiz, sahifalangan) — oraliq tugmasiz to'g'ridan-to'g'ri."""
     market_id = int(callback.data.split(":")[1])
 
     all_products = await get_products_by_market(session, market_id)
@@ -140,12 +126,12 @@ async def show_categories(callback: CallbackQuery, session: AsyncSession, lang: 
         await callback.message.answer(get_text("market_empty", lang))
         await callback.answer()
         return
-    
-    # Yangi do'kon — avvalgi "joriy mahsulotlar xabari" iznini tozalaymiz,
+
+    # Yangi do'kon — eski "joriy mahsulotlar xabari" iznini tozalaymiz,
     # shunda yangi ro'yxat albatta YANGI xabar sifatida yuboriladi.
     await state.set_data({})
     await state.update_data(market_id=market_id)
-    await state.set_state(Shopping.searching_product)  # matn kelsa - qidiruv sifatida qaraladi
+    await state.set_state(Shopping.searching_product)
 
     try:
         await callback.message.delete()
@@ -186,20 +172,16 @@ async def filter_by_brand(callback: CallbackQuery, session: AsyncSession, lang: 
 
 @router.callback_query(F.data.startswith("prod_page:"))
 async def paginate_products(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext, bot: Bot):
-    """
-    Sahifa almashtirish (◀️/▶️) — mahsulotlar xabari qayta yuborilmaydi,
-    tahrirlanadi. Mahsulot tafsiloti sahifasidagi "orqaga" tugmasi ham shu
-    handlerga keladi — bunday holda tafsilot xabari (rasm bilan) yopiladi
-    va asosiy ro'yxat xabari o'sha sahifaga qaytariladi.
-    """
+    """Sahifa almashtirish (◀️/▶️) — mahsulotlar xabari tahrirlanadi, qayta
+    yuborilmaydi. Mahsulot tafsilotidagi "orqaga" tugmasi ham shu handlerga
+    keladi — bunday holda tafsilot xabari yopiladi va ro'yxat o'sha sahifaga qaytariladi."""
     _, market_id, ftype, fid, page = callback.data.split(":")
     market_id, fid, page = int(market_id), int(fid), int(page)
 
     data = await state.get_data()
     tracked_message_id = data.get("products_message_id")
     if tracked_message_id and callback.message.message_id != tracked_message_id:
-        # Bu chaqiruv mahsulot tafsiloti (rasmli) xabaridan "orqaga" bosilgani —
-        # o'sha xabarni tozalaymiz, asosiy ro'yxat xabari alohida tahrirlanadi.
+        # "Orqaga" tafsilot (rasmli) xabaridan bosilgan — uni tozalaymiz
         try:
             await callback.message.delete()
         except Exception:
@@ -345,8 +327,7 @@ async def process_manual_quantity(message: Message, session: AsyncSession, lang:
     chat_id = data.get("qty_chat_id")
     message_id = data.get("qty_message_id")
 
-    # Faqat vaqtinchalik "qty_*" ma'lumotlarini tozalaymiz, umumiy
-    # (market_id, products_chat_id/message_id, last_search_query) holatni emas.
+    # Faqat vaqtinchalik "qty_*" ma'lumotlarini tozalaymiz, umumiy state emas
     await state.update_data(
         qty_product_id=None, qty_market_id=None, qty_ftype=None, qty_fid=None,
         qty_page=None, qty_chat_id=None, qty_message_id=None,

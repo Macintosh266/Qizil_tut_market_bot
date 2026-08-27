@@ -42,10 +42,7 @@ def admin_panel_kb(lang: str) -> ReplyKeyboardMarkup:
     keyboard = [
         [
             KeyboardButton(text=get_employe_text("admin_management_btn", lang)),
-            # STAFF (Xodimlar) boshqaruvi vaqtincha uzib qo'yilgan (qarang:
-            # bot/handlers/admin/__init__.py). Tugma shu sabab menyudan
-            # olib tashlangan — funksiya qayta yoqilganda bu qatorni ham
-            # qaytaring: KeyboardButton(text=get_employe_text("staff_management_btn", lang)),
+            # STAFF boshqaruvi vaqtincha uzib qo'yilgan — qayta yoqish bot/handlers/admin/__init__.py'da
             KeyboardButton(text=get_employe_text("market_management_btn", lang)),
         ],
         [
@@ -67,15 +64,11 @@ def admin_panel_kb(lang: str) -> ReplyKeyboardMarkup:
 
 def market_admin_panel_kb(lang: str) -> ReplyKeyboardMarkup:
     """Oddiy (bitta do'konga tegishli) ADMIN uchun qisqartirilgan panel —
-    faqat o'z do'koniga tegishli bo'limlar: mahsulotlar, statistika.
-    Admin/Do'kon/Kategoriya/Brend boshqaruvi (butun platformaga tegishli)
-    ko'rinmaydi — bular faqat SUPER_ADMIN uchun. STAFF (Xodimlar) boshqaruvi
-    vaqtincha uzib qo'yilgan — pastga qarang."""
+    platforma darajasidagi bo'limlar (Admin/Do'kon/Kategoriya/Brend) faqat
+    SUPER_ADMIN'da ko'rinadi. STAFF boshqaruvi vaqtincha uzib qo'yilgan."""
     keyboard = [
         [
-            # STAFF (Xodimlar) boshqaruvi vaqtincha uzib qo'yilgan (qarang:
-            # bot/handlers/admin/__init__.py). Qayta yoqilganda:
-            # KeyboardButton(text=get_employe_text("staff_management_btn", lang)),
+            # STAFF boshqaruvi vaqtincha uzib qo'yilgan — qarang: bot/handlers/admin/__init__.py
             KeyboardButton(text=get_employe_text("product_management_btn", lang)),
         ],
         [
