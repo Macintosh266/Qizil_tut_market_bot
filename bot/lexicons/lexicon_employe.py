@@ -55,6 +55,11 @@ LEXICON_EMPLOYE: dict[str, dict[str, str]] = {
         "ru": "📦 Управление товарами",
         "en": "📦 Product management",
     },
+    "catalog_management_btn": {
+        "uz": "📦 Mahsulotlar bo'limi",
+        "ru": "📦 Раздел товаров",
+        "en": "📦 Products section",
+    },
     "statistics_btn": {
         "uz": "📊 Statistika",
         "ru": "📊 Статистика",
@@ -157,6 +162,76 @@ LEXICON_EMPLOYE: dict[str, dict[str, str]] = {
         "uz": "📋 Do'konlar ro'yxati",
         "ru": "📋 Список магазинов",
         "en": "📋 Market list",
+    },
+    "link_billz_btn": {
+        "uz": "🔗 Billz bilan bog'lash",
+        "ru": "🔗 Привязать к Billz",
+        "en": "🔗 Link to Billz",
+    },
+    "sync_billz_btn": {
+        "uz": "🔄 Billz sinxronizatsiya",
+        "ru": "🔄 Синхронизация с Billz",
+        "en": "🔄 Sync with Billz",
+    },
+    "billz_not_configured": {
+        "uz": "❗️ Billz sozlanmagan. .env faylida BILLZ_SYNC_ENABLED=true qiling.",
+        "ru": "❗️ Billz не настроен. Установите BILLZ_SYNC_ENABLED=true в .env файле.",
+        "en": "❗️ Billz is not configured. Set BILLZ_SYNC_ENABLED=true in the .env file.",
+    },
+    "billz_managed_no_manual_edit": {
+        "uz": "❗️ Bu do'kon Billz bilan bog'langan — mahsulotlar FAQAT Billz orqali avtomatik boshqariladi. Qo'lda qo'shish/tahrirlash/o'chirish o'chirilgan. O'zgarishni Billz'da kiriting, u bir necha daqiqada botda ham ko'rinadi.",
+        "ru": "❗️ Этот магазин связан с Billz — товары управляются ТОЛЬКО автоматически через Billz. Ручное добавление/редактирование/удаление отключено. Внесите изменение в Billz, оно появится в боте через несколько минут.",
+        "en": "❗️ This market is linked to Billz — products are managed ONLY automatically via Billz. Manual add/edit/delete is disabled. Make the change in Billz; it will appear in the bot within a few minutes.",
+    },
+    "choose_market_to_link": {
+        "uz": "Qaysi do'konni Billz bilan bog'lamoqchisiz?",
+        "ru": "Какой магазин связать с Billz?",
+        "en": "Which market do you want to link to Billz?",
+    },
+    "enter_billz_secret_key": {
+        "uz": "'{market}' do'koni uchun Billz API kalitini (secret key) yuboring:",
+        "ru": "Отправьте API-ключ (secret key) Billz для магазина '{market}':",
+        "en": "Send the Billz API secret key for the market '{market}':",
+    },
+    "billz_key_checking": {
+        "uz": "⏳ Kalit tekshirilmoqda...",
+        "ru": "⏳ Проверка ключа...",
+        "en": "⏳ Checking the key...",
+    },
+    "billz_key_invalid": {
+        "uz": "❗️ Kalit noto'g'ri yoki Billz bilan bog'lanib bo'lmadi. Kalitni tekshirib, qayta yuboring.",
+        "ru": "❗️ Ключ неверен или не удалось связаться с Billz. Проверьте ключ и отправьте снова.",
+        "en": "❗️ The key is invalid or Billz could not be reached. Check the key and send it again.",
+    },
+    "market_linked_to_billz": {
+        "uz": "✅ '{market}' do'koni Billz bilan bog'landi.",
+        "ru": "✅ Магазин '{market}' привязан к Billz.",
+        "en": "✅ Market '{market}' is now linked to Billz.",
+    },
+    "no_unlinked_markets": {
+        "uz": "Barcha do'konlar allaqachon Billz bilan bog'langan (yoki hali do'kon qo'shilmagan).",
+        "ru": "Все магазины уже привязаны к Billz (либо магазины ещё не добавлены).",
+        "en": "All markets are already linked to Billz (or no markets exist yet).",
+    },
+    "billz_sync_started": {
+        "uz": "⏳ Sinxronizatsiya boshlandi, biroz vaqt olishi mumkin...",
+        "ru": "⏳ Синхронизация началась, это может занять некоторое время...",
+        "en": "⏳ Sync started, this may take a moment...",
+    },
+    "billz_sync_result": {
+        "uz": "✅ Sinxronizatsiya yakunlandi.\n🏪 Do'konlar: {shops}\n🆕 Yangi mahsulot: {created}\n♻️ Yangilangan: {updated}\n🗑 O'chirilgan (Billz'da yo'q): {deactivated}\n{errors}",
+        "ru": "✅ Синхронизация завершена.\n🏪 Магазины: {shops}\n🆕 Новых товаров: {created}\n♻️ Обновлено: {updated}\n🗑 Удалено (нет в Billz): {deactivated}\n{errors}",
+        "en": "✅ Sync finished.\n🏪 Shops: {shops}\n🆕 New products: {created}\n♻️ Updated: {updated}\n🗑 Removed (missing in Billz): {deactivated}\n{errors}",
+    },
+    "billz_sync_no_shops": {
+        "uz": "Hech qanday do'kon Billz bilan bog'lanmagan. Avval '🔗 Billz bilan bog'lash' orqali bog'lang.",
+        "ru": "Ни один магазин не привязан к Billz. Сначала свяжите через '🔗 Привязать к Billz'.",
+        "en": "No markets are linked to Billz yet. Link one first via '🔗 Link to Billz'.",
+    },
+    "billz_sync_error": {
+        "uz": "❗️ Sinxronizatsiyada xato: {error}",
+        "ru": "❗️ Ошибка синхронизации: {error}",
+        "en": "❗️ Sync error: {error}",
     },
     "add_market_prompt": {
         "uz": "Yangi do'kon nomini kiriting:",
@@ -796,6 +871,78 @@ LEXICON_EMPLOYE: dict[str, dict[str, str]] = {
         "uz": "✅ Ha, tasdiqlayman",
         "ru": "✅ Да, подтверждаю",
         "en": "✅ Yes, confirm",
+    },
+    "yes_btn": {
+        "uz": "✅ Ha",
+        "ru": "✅ Да",
+        "en": "✅ Yes",
+    },
+    "no_btn": {
+        "uz": "🚫 Yo'q",
+        "ru": "🚫 Нет",
+        "en": "🚫 No",
+    },
+    "ask_has_billz": {
+        "uz": "Bu do'konda Billz tizimi bormi?",
+        "ru": "В этом магазине есть система Billz?",
+        "en": "Does this market use Billz?",
+    },
+    "enter_billz_secret_key_short": {
+        "uz": "Billz API kalitini (secret key) yuboring:",
+        "ru": "Отправьте API-ключ (secret key) Billz:",
+        "en": "Send the Billz API secret key:",
+    },
+    "market_setup_done": {
+        "uz": "✅ Do'kon tayyor. Mahsulotlarni admin panel orqali qo'lda qo'shishingiz mumkin.",
+        "ru": "✅ Магазин готов. Вы можете добавлять товары вручную через админ-панель.",
+        "en": "✅ Market is set up. You can add products manually via the admin panel.",
+    },
+
+    # ========== BUYURTMALAR RO'YXATI (holat bo'yicha) ==========
+    "orders_list_btn": {
+        "uz": "📦 Buyurtmalar",
+        "ru": "📦 Заказы",
+        "en": "📦 Orders",
+    },
+    "choose_order_status": {
+        "uz": "Qaysi holatdagi buyurtmalarni ko'rmoqchisiz?",
+        "ru": "Заказы в каком статусе хотите посмотреть?",
+        "en": "Which order status would you like to view?",
+    },
+    "order_status_new": {
+        "uz": "🆕 Ko'rib chiqilmoqda",
+        "ru": "🆕 На рассмотрении",
+        "en": "🆕 Under review",
+    },
+    "order_status_confirmed": {
+        "uz": "✅ Tasdiqlangan",
+        "ru": "✅ Подтверждённые",
+        "en": "✅ Confirmed",
+    },
+    "order_status_canceled": {
+        "uz": "❌ Tasdiqlanmagan (rad etilgan)",
+        "ru": "❌ Не подтверждённые (отклонённые)",
+        "en": "❌ Not confirmed (rejected)",
+    },
+    "no_orders_in_status": {
+        "uz": "Bu holatda buyurtmalar yo'q.",
+        "ru": "В этом статусе заказов нет.",
+        "en": "There are no orders in this status.",
+    },
+    "orders_list_title": {
+        "uz": "📦 Buyurtmalar — {status}",
+        "ru": "📦 Заказы — {status}",
+        "en": "📦 Orders — {status}",
+    },
+    "order_detail": {
+        "uz": "📦 <b>Buyurtma #{order_id}</b>\nHolat: {status}\n\n👤 Mijoz: {customer}\n📞 Telefon: {phone}\n{delivery_info}\n\n🛍 Mahsulotlar:\n{items}\n\n💰 Summa: {total}",
+        "ru": "📦 <b>Заказ #{order_id}</b>\nСтатус: {status}\n\n👤 Клиент: {customer}\n📞 Телефон: {phone}\n{delivery_info}\n\n🛍 Товары:\n{items}\n\n💰 Сумма: {total}",
+        "en": "📦 <b>Order #{order_id}</b>\nStatus: {status}\n\n👤 Customer: {customer}\n📞 Phone: {phone}\n{delivery_info}\n\n🛍 Items:\n{items}\n\n💰 Total: {total}",
+    },
+    "order_not_found": {
+        "uz": "Buyurtma topilmadi yoki sizga tegishli emas.",
+        "ru": "Заказ не найден или не относится к вам.",
+        "en": "Order not found or does not belong to you.",
     },
     "cancel_btn": {
         "uz": "❌ Bekor qilish",

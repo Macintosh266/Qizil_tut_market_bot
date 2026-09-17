@@ -157,6 +157,16 @@ LEXICON_TEXT: dict[str, dict[str, str]] = {
         "ru": "В наличии осталось только {stock} шт.",
         "en": "Only {stock} left in stock.",
     },
+    "not_enough_stock_named": {
+        "uz": "❗️ '{name}' omborda faqat {stock} dona qoldi. Savatdagi miqdorni kamaytirib qayta urinib ko'ring.",
+        "ru": "❗️ Товара '{name}' в наличии осталось только {stock} шт. Уменьшите количество в корзине и попробуйте снова.",
+        "en": "❗️ Only {stock} left in stock for '{name}'. Please reduce the quantity in your cart and try again.",
+    },
+    "cart_different_market": {
+        "uz": "❗️ Savatingizda boshqa do'kondan mahsulot bor. Avval o'sha buyurtmani bering yoki savatni tozalang, so'ng bu do'kondan xarid qiling.",
+        "ru": "❗️ В вашей корзине есть товар из другого магазина. Сначала оформите тот заказ или очистите корзину, затем покупайте здесь.",
+        "en": "❗️ Your cart has an item from a different market. Please place that order or clear your cart first, then shop here.",
+    },
     "product_not_found": {
         "uz": "Bu mahsulot topilmadi (ehtimol o'chirilgan).",
         "ru": "Товар не найден (возможно, он был удалён).",
@@ -351,46 +361,99 @@ LEXICON_TEXT: dict[str, dict[str, str]] = {
     },
     "help_admin": {
         "uz": (
-            "🛠 <b>Admin panel — yordam</b>\n\n"
+            "🛠 <b>Super-admin panel — yordam</b>\n\n"
             "/start — botni qayta boshlash\n"
             "/help — yordam\n\n"
             "Admin panel orqali quyidagilarni boshqarasiz:\n"
             "📦 <b>Mahsulotlar</b> — qo'shish, tahrirlash, o'chirish, ro'yxat\n"
             "🗂 <b>Kategoriyalar</b> va 🏷 <b>Brendlar</b> — qo'shish/o'chirish\n"
-            "🏪 <b>Do'konlar</b> va 👤 <b>Adminlar</b> — faqat super-admin uchun\n"
+            "🏪 <b>Do'konlar</b> — qo'shish, o'chirish, Billz bilan bog'lash\n"
+            "👤 <b>Adminlar</b> — do'kon adminlarini tayinlash/olib tashlash\n"
             "🚫 <b>Ban</b> — foydalanuvchini bloklash/blokdan chiqarish\n"
-            "📊 <b>Statistika</b> — davr bo'yicha savdo hisobotlari\n"
-            "💬 <b>Fikrlar</b> — mijozlar qoldirgan fikr-mulohazalar\n\n"
+            "📊 <b>Statistika</b> — barcha do'konlar bo'yicha savdo hisobotlari\n"
+            "💬 <b>Fikrlar</b> — mijozlar qoldirgan fikr-mulohazalar\n"
+            "📋 <b>Buyurtmalar</b> — barcha do'konlar buyurtmalari ro'yxati\n\n"
             "Yangi buyurtma tushganda sizga xabar keladi — 'Qabul qilish' "
             "yoki 'Rad etish' tugmasi orqali javob bering."
         ),
         "ru": (
-            "🛠 <b>Панель администратора — помощь</b>\n\n"
+            "🛠 <b>Панель супер-администратора — помощь</b>\n\n"
             "/start — перезапустить бота\n"
             "/help — помощь\n\n"
             "Через админ-панель вы управляете:\n"
             "📦 <b>Товарами</b> — добавление, редактирование, удаление, список\n"
             "🗂 <b>Категориями</b> и 🏷 <b>Брендами</b> — добавление/удаление\n"
-            "🏪 <b>Магазинами</b> и 👤 <b>Админами</b> — только для супер-админа\n"
+            "🏪 <b>Магазинами</b> — добавление, удаление, привязка Billz\n"
+            "👤 <b>Админами</b> — назначение/снятие админов магазинов\n"
             "🚫 <b>Баном</b> — блокировка/разблокировка пользователей\n"
-            "📊 <b>Статистикой</b> — отчёты о продажах за период\n"
-            "💬 <b>Отзывами</b> — отзывы, оставленные клиентами\n\n"
+            "📊 <b>Статистикой</b> — отчёты о продажах по всем магазинам\n"
+            "💬 <b>Отзывами</b> — отзывы, оставленные клиентами\n"
+            "📋 <b>Заказами</b> — список заказов по всем магазинам\n\n"
             "При поступлении нового заказа вам придёт уведомление — "
             "ответьте кнопкой «Принять» или «Отклонить»."
         ),
         "en": (
-            "🛠 <b>Admin panel — help</b>\n\n"
+            "🛠 <b>Super-admin panel — help</b>\n\n"
             "/start — restart the bot\n"
             "/help — help\n\n"
             "Through the admin panel you manage:\n"
             "📦 <b>Products</b> — add, edit, delete, list\n"
             "🗂 <b>Categories</b> and 🏷 <b>Brands</b> — add/delete\n"
-            "🏪 <b>Markets</b> and 👤 <b>Admins</b> — super-admin only\n"
+            "🏪 <b>Markets</b> — add, delete, link Billz\n"
+            "👤 <b>Admins</b> — assign/remove market admins\n"
             "🚫 <b>Ban</b> — block/unblock users\n"
-            "📊 <b>Statistics</b> — sales reports by period\n"
-            "💬 <b>Feedback</b> — messages left by customers\n\n"
+            "📊 <b>Statistics</b> — sales reports across all markets\n"
+            "💬 <b>Feedback</b> — messages left by customers\n"
+            "📋 <b>Orders</b> — order list across all markets\n\n"
             "You'll be notified of new orders — reply using the "
             "'Accept' or 'Reject' button."
+        ),
+    },
+    "help_market_admin": {
+        "uz": (
+            "🏪 <b>Do'kon admin paneli — yordam</b>\n\n"
+            "/start — botni qayta boshlash\n"
+            "/help — yordam\n\n"
+            "O'zingizning do'koningiz doirasida quyidagilarni boshqarasiz:\n"
+            "📦 <b>Mahsulotlar</b> — qo'shish, tahrirlash, o'chirish, ro'yxat\n"
+            "🚫 <b>Ban</b> — o'z do'koningiz mijozlarini bloklash/blokdan chiqarish\n"
+            "📊 <b>Statistika</b> — do'koningiz savdo hisobotlari\n"
+            "💬 <b>Fikrlar</b> — do'koningizga qoldirilgan fikr-mulohazalar\n"
+            "📋 <b>Buyurtmalar</b> — do'koningizga tushgan buyurtmalar ro'yxati\n\n"
+            "Yangi buyurtma tushganda sizga xabar keladi — 'Qabul qilish' "
+            "yoki 'Rad etish' tugmasi orqali javob bering.\n\n"
+            "Do'kon qo'shish/o'chirish, boshqa adminlarni tayinlash yoki "
+            "kategoriya/brend boshqaruvi — faqat super-admin uchun."
+        ),
+        "ru": (
+            "🏪 <b>Панель админа магазина — помощь</b>\n\n"
+            "/start — перезапустить бота\n"
+            "/help — помощь\n\n"
+            "В рамках вашего магазина вы управляете:\n"
+            "📦 <b>Товарами</b> — добавление, редактирование, удаление, список\n"
+            "🚫 <b>Баном</b> — блокировка/разблокировка клиентов вашего магазина\n"
+            "📊 <b>Статистикой</b> — отчёты о продажах вашего магазина\n"
+            "💬 <b>Отзывами</b> — отзывы, оставленные о вашем магазине\n"
+            "📋 <b>Заказами</b> — список заказов, поступивших в ваш магазин\n\n"
+            "При поступлении нового заказа вам придёт уведомление — "
+            "ответьте кнопкой «Принять» или «Отклонить».\n\n"
+            "Добавление/удаление магазинов, назначение админов и управление "
+            "категориями/брендами — доступно только супер-админу."
+        ),
+        "en": (
+            "🏪 <b>Market admin panel — help</b>\n\n"
+            "/start — restart the bot\n"
+            "/help — help\n\n"
+            "Within your own market you manage:\n"
+            "📦 <b>Products</b> — add, edit, delete, list\n"
+            "🚫 <b>Ban</b> — block/unblock your market's customers\n"
+            "📊 <b>Statistics</b> — your market's sales reports\n"
+            "💬 <b>Feedback</b> — feedback left about your market\n"
+            "📋 <b>Orders</b> — orders placed at your market\n\n"
+            "You'll be notified of new orders — reply using the "
+            "'Accept' or 'Reject' button.\n\n"
+            "Adding/removing markets, assigning admins, and category/brand "
+            "management are super-admin only."
         ),
     },
     "unknown_command": {

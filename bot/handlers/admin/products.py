@@ -16,7 +16,7 @@ from bot.database.repository.category_repo import (
     get_category_by_name,
     get_or_create_category,
 )
-from bot.database.repository.market_repo import get_all_markets, get_market
+from bot.database.repository.market_repo import get_all_markets, get_market, is_market_billz_managed
 from bot.database.repository.product_repo import (
     add_or_restock_product,
     delete_product,
@@ -30,7 +30,7 @@ from bot.database.repository.product_repo import (
     update_product_stock,
 )
 from bot.enums.enum import UserRole
-from bot.filters import IsAdmin
+from bot.filters import IsAdmin, IsSuperAdmin
 from bot.handlers.admin.base import CONFIRM_TEXTS, btn_texts, finish, track_list_message
 from bot.keyboards.admin_kb import (
     brands_pick_kb,
@@ -52,11 +52,32 @@ router.message.filter(IsAdmin())
 router.callback_query.filter(IsAdmin())
 
 
+def _owns_product(db_user: UserModel, product) -> bool:
+    """SUPER_ADMIN istalgan mahsulotni, oddiy ADMIN esa faqat o'z do'koniga
+    tegishli mahsulotni boshqarishi mumkin."""
+    return db_user.role == UserRole.SUPER_ADMIN or product.market_id == db_user.market_id
+
+
+async def _block_if_billz_managed(session: AsyncSession, lang: str, market_id: int) -> str | None:
+    """
+    Agar shu do'kon Billz bilan bog'langan bo'lsa (mahsulotlari FAQAT Billz
+    orqali avtomatik boshqariladi), qo'lda qo'shish/tahrirlash/o'chirishni
+    bloklaydigan xabar matnini qaytaradi. Bog'lanmagan bo'lsa — None
+    (bloklash shart emas)."""
+    if await is_market_billz_managed(session, market_id):
+        return get_employe_text("billz_managed_no_manual_edit", lang)
+    return None
+
+
 # ==================== MAHSULOT QO'SHISH — admin panel (tugmalar) ====================
 
 @router.message(F.text.func(lambda t: t in btn_texts("add_product_btn")))
 async def start_add_product(message: Message, session: AsyncSession, lang: str, state: FSMContext, db_user: UserModel):
     if db_user.role != UserRole.SUPER_ADMIN:
+        block_reason = await _block_if_billz_managed(session, lang, db_user.market_id)
+        if block_reason:
+            await message.answer(block_reason)
+            return
         # Do'konga bog'langan admin uchun do'kon tanlash shart emas
         await state.update_data(market_id=db_user.market_id)
         await state.set_state(AdminPanelStates.waiting_add_product_name)
@@ -76,12 +97,16 @@ async def start_add_product(message: Message, session: AsyncSession, lang: str, 
     await track_list_message(state, sent)
 
 
-@router.callback_query(F.data.startswith("ap_market_pick:"))
+@router.callback_query(IsSuperAdmin(), F.data.startswith("ap_market_pick:"))
 async def pick_add_product_market(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext):
     market_id = int(callback.data.split(":")[1])
     market = await get_market(session, market_id)
     if not market:
         await callback.answer(get_employe_text("market_not_found", lang), show_alert=True)
+        return
+    block_reason = await _block_if_billz_managed(session, lang, market_id)
+    if block_reason:
+        await callback.answer(block_reason, show_alert=True)
         return
     await state.update_data(market_id=market.id)
     await state.set_state(AdminPanelStates.waiting_add_product_name)
@@ -259,6 +284,10 @@ async def skip_add_product_photo(message: Message, session: AsyncSession, lang: 
 @router.message(F.text.func(lambda t: t in btn_texts("delete_product_btn")))
 async def start_delete_product(message: Message, session: AsyncSession, lang: str, state: FSMContext, db_user: UserModel):
     if db_user.role != UserRole.SUPER_ADMIN:
+        block_reason = await _block_if_billz_managed(session, lang, db_user.market_id)
+        if block_reason:
+            await message.answer(block_reason)
+            return
         products = await get_products_by_market(session, db_user.market_id)
         if not products:
             await message.answer(get_employe_text("empty_list", lang))
@@ -285,9 +314,13 @@ async def start_delete_product(message: Message, session: AsyncSession, lang: st
     await track_list_message(state, sent)
 
 
-@router.callback_query(F.data.startswith("dp_market_pick:"))
+@router.callback_query(IsSuperAdmin(), F.data.startswith("dp_market_pick:"))
 async def pick_delete_product_market(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext):
     market_id = int(callback.data.split(":")[1])
+    block_reason = await _block_if_billz_managed(session, lang, market_id)
+    if block_reason:
+        await callback.answer(block_reason, show_alert=True)
+        return
     products = await get_products_by_market(session, market_id)
     if not products:
         await callback.answer(get_employe_text("empty_list", lang), show_alert=True)
@@ -302,11 +335,18 @@ async def pick_delete_product_market(callback: CallbackQuery, session: AsyncSess
 
 
 @router.callback_query(F.data.startswith("dp_product_pick:"))
-async def pick_delete_product(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext):
+async def pick_delete_product(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext, db_user: UserModel):
     product_id = int(callback.data.split(":")[1])
     product = await get_product(session, product_id)
     if not product:
         await callback.answer(get_employe_text("product_not_found", lang), show_alert=True)
+        return
+    if not _owns_product(db_user, product):
+        await callback.answer(get_employe_text("product_not_found", lang), show_alert=True)
+        return
+    block_reason = await _block_if_billz_managed(session, lang, product.market_id)
+    if block_reason:
+        await callback.answer(block_reason, show_alert=True)
         return
     await state.update_data(product_id=product.id)
     await state.set_state(AdminPanelStates.waiting_confirm_delete_product)
@@ -321,9 +361,11 @@ async def pick_delete_product(callback: CallbackQuery, session: AsyncSession, la
 
 
 @router.message(AdminPanelStates.waiting_confirm_delete_product, F.text.func(lambda t: t in CONFIRM_TEXTS))
-async def process_confirm_delete_product(message: Message, session: AsyncSession, lang: str, state: FSMContext):
+async def process_confirm_delete_product(message: Message, session: AsyncSession, lang: str, state: FSMContext, db_user: UserModel):
     data = await state.get_data()
     product = await get_product(session, data["product_id"])
+    if product and not _owns_product(db_user, product):
+        product = None
     if product:
         await delete_product(session, product)
     await finish(
@@ -336,6 +378,10 @@ async def process_confirm_delete_product(message: Message, session: AsyncSession
 @router.message(F.text.func(lambda t: t in btn_texts("edit_product_price_btn")))
 async def start_edit_product(message: Message, session: AsyncSession, lang: str, state: FSMContext, db_user: UserModel):
     if db_user.role != UserRole.SUPER_ADMIN:
+        block_reason = await _block_if_billz_managed(session, lang, db_user.market_id)
+        if block_reason:
+            await message.answer(block_reason)
+            return
         products = await get_products_by_market(session, db_user.market_id)
         if not products:
             await message.answer(get_employe_text("empty_list", lang))
@@ -362,9 +408,13 @@ async def start_edit_product(message: Message, session: AsyncSession, lang: str,
     await track_list_message(state, sent)
 
 
-@router.callback_query(F.data.startswith("ep_market_pick:"))
+@router.callback_query(IsSuperAdmin(), F.data.startswith("ep_market_pick:"))
 async def pick_edit_product_market(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext):
     market_id = int(callback.data.split(":")[1])
+    block_reason = await _block_if_billz_managed(session, lang, market_id)
+    if block_reason:
+        await callback.answer(block_reason, show_alert=True)
+        return
     products = await get_products_by_market(session, market_id)
     if not products:
         await callback.answer(get_employe_text("empty_list", lang), show_alert=True)
@@ -379,11 +429,18 @@ async def pick_edit_product_market(callback: CallbackQuery, session: AsyncSessio
 
 
 @router.callback_query(F.data.startswith("ep_product_pick:"))
-async def pick_edit_product(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext):
+async def pick_edit_product(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext, db_user: UserModel):
     product_id = int(callback.data.split(":")[1])
     product = await get_product(session, product_id)
     if not product:
         await callback.answer(get_employe_text("product_not_found", lang), show_alert=True)
+        return
+    if not _owns_product(db_user, product):
+        await callback.answer(get_employe_text("product_not_found", lang), show_alert=True)
+        return
+    block_reason = await _block_if_billz_managed(session, lang, product.market_id)
+    if block_reason:
+        await callback.answer(block_reason, show_alert=True)
         return
     await state.set_state(None)
     await callback.message.edit_text(
@@ -394,11 +451,18 @@ async def pick_edit_product(callback: CallbackQuery, session: AsyncSession, lang
 
 
 @router.callback_query(F.data.startswith("edit_field:"))
-async def choose_edit_field(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext):
+async def choose_edit_field(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext, db_user: UserModel):
     _, field, product_id = callback.data.split(":")
     product = await get_product(session, int(product_id))
     if not product:
         await callback.answer(get_employe_text("product_not_found", lang), show_alert=True)
+        return
+    if not _owns_product(db_user, product):
+        await callback.answer(get_employe_text("product_not_found", lang), show_alert=True)
+        return
+    block_reason = await _block_if_billz_managed(session, lang, product.market_id)
+    if block_reason:
+        await callback.answer(block_reason, show_alert=True)
         return
 
     field_state = {
@@ -432,9 +496,11 @@ async def choose_edit_field(callback: CallbackQuery, session: AsyncSession, lang
 
 
 @router.message(AdminPanelStates.waiting_edit_name_value, F.text)
-async def process_edit_name(message: Message, session: AsyncSession, lang: str, state: FSMContext):
+async def process_edit_name(message: Message, session: AsyncSession, lang: str, state: FSMContext, db_user: UserModel):
     data = await state.get_data()
     product = await get_product(session, data["product_id"])
+    if product and not _owns_product(db_user, product):
+        product = None
     if not product:
         await finish(message, state, lang, get_employe_text("product_not_found", lang))
         return
@@ -444,9 +510,11 @@ async def process_edit_name(message: Message, session: AsyncSession, lang: str, 
 
 
 @router.message(AdminPanelStates.waiting_edit_description_value, F.text)
-async def process_edit_description(message: Message, session: AsyncSession, lang: str, state: FSMContext):
+async def process_edit_description(message: Message, session: AsyncSession, lang: str, state: FSMContext, db_user: UserModel):
     data = await state.get_data()
     product = await get_product(session, data["product_id"])
+    if product and not _owns_product(db_user, product):
+        product = None
     if not product:
         await finish(message, state, lang, get_employe_text("product_not_found", lang))
         return
@@ -455,7 +523,7 @@ async def process_edit_description(message: Message, session: AsyncSession, lang
 
 
 @router.message(AdminPanelStates.waiting_edit_price_new_value, F.text)
-async def process_edit_price_new_value(message: Message, session: AsyncSession, lang: str, state: FSMContext):
+async def process_edit_price_new_value(message: Message, session: AsyncSession, lang: str, state: FSMContext, db_user: UserModel):
     try:
         new_price = float(message.text.strip())
     except ValueError:
@@ -464,6 +532,8 @@ async def process_edit_price_new_value(message: Message, session: AsyncSession, 
 
     data = await state.get_data()
     product = await get_product(session, data["product_id"])
+    if product and not _owns_product(db_user, product):
+        product = None
     if not product:
         await finish(message, state, lang, get_employe_text("product_not_found", lang))
         return
@@ -476,13 +546,15 @@ async def process_edit_price_new_value(message: Message, session: AsyncSession, 
 
 
 @router.message(AdminPanelStates.waiting_edit_stock_value, F.text)
-async def process_edit_stock(message: Message, session: AsyncSession, lang: str, state: FSMContext):
+async def process_edit_stock(message: Message, session: AsyncSession, lang: str, state: FSMContext, db_user: UserModel):
     if not message.text.strip().lstrip("-").isdigit():
         await message.answer(get_employe_text("only_numbers", lang))
         return
 
     data = await state.get_data()
     product = await get_product(session, data["product_id"])
+    if product and not _owns_product(db_user, product):
+        product = None
     if not product:
         await finish(message, state, lang, get_employe_text("product_not_found", lang))
         return
@@ -493,9 +565,11 @@ async def process_edit_stock(message: Message, session: AsyncSession, lang: str,
 
 
 @router.message(AdminPanelStates.waiting_edit_category_value, F.text)
-async def process_edit_category(message: Message, session: AsyncSession, lang: str, state: FSMContext):
+async def process_edit_category(message: Message, session: AsyncSession, lang: str, state: FSMContext, db_user: UserModel):
     data = await state.get_data()
     product = await get_product(session, data["product_id"])
+    if product and not _owns_product(db_user, product):
+        product = None
     if not product:
         await finish(message, state, lang, get_employe_text("product_not_found", lang))
         return
@@ -507,9 +581,11 @@ async def process_edit_category(message: Message, session: AsyncSession, lang: s
 
 
 @router.message(AdminPanelStates.waiting_edit_photo_value, F.photo)
-async def process_edit_photo(message: Message, session: AsyncSession, lang: str, state: FSMContext):
+async def process_edit_photo(message: Message, session: AsyncSession, lang: str, state: FSMContext, db_user: UserModel):
     data = await state.get_data()
     product = await get_product(session, data["product_id"])
+    if product and not _owns_product(db_user, product):
+        product = None
     if not product:
         await finish(message, state, lang, get_employe_text("product_not_found", lang))
         return
@@ -555,21 +631,34 @@ async def show_market_products(callback: CallbackQuery, session: AsyncSession, l
 
 
 @router.callback_query(F.data.startswith("product_info:"))
-async def show_product_info(callback: CallbackQuery, session: AsyncSession, lang: str):
+async def show_product_info(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext):
     product_id = int(callback.data.split(":")[1])
     product = await get_product(session, product_id)
     if not product:
         await callback.answer()
         return
+
+    # Oldin ko'rsatilgan mahsulot tafsiloti (agar bo'lsa) o'chiriladi —
+    # bir nechta mahsulotni ketma-ket bosganda xabarlar to'planib qolmasligi uchun.
+    data = await state.get_data()
+    prev_chat_id = data.get("product_info_chat_id")
+    prev_message_id = data.get("product_info_message_id")
+    if prev_chat_id and prev_message_id:
+        try:
+            await callback.bot.delete_message(prev_chat_id, prev_message_id)
+        except Exception:
+            pass
+
     text = (
         f"<b>{product.name}</b>\n"
         f"{get_text('product_price', lang)}: {product.price:,.0f}\n"
         f"{get_text('product_stock', lang)}: {product.stock}"
     )
     if product.image_file_id:
-        await callback.message.answer_photo(product.image_file_id, caption=text)
+        sent = await callback.message.answer_photo(product.image_file_id, caption=text)
     else:
-        await callback.message.answer(text)
+        sent = await callback.message.answer(text)
+    await state.update_data(product_info_chat_id=sent.chat.id, product_info_message_id=sent.message_id)
     await callback.answer()
 
 

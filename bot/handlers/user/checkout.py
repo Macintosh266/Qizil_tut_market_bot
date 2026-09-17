@@ -4,7 +4,7 @@ from aiogram.types import CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.config import settings
-from bot.database.repository.order_repo import create_order_with_statistics, get_order
+from bot.database.repository.order_repo import InsufficientStockError, create_order_with_statistics, get_order
 from bot.database.repository.product_repo import get_product
 from bot.database.repository.user_repo import get_active_address, get_user_by_telegram_id
 from bot.enums.enum import DeliveryType, UserRole
@@ -25,6 +25,10 @@ async def start_checkout(callback: CallbackQuery, state: FSMContext, lang: str):
         await callback.answer(get_text("cart_empty", lang), show_alert=True)
         return
 
+    try:
+        await callback.message.delete()
+    except Exception:
+        pass
     await callback.message.answer(
         get_text("choose_delivery_type", lang), reply_markup=delivery_type_kb(lang)
     )
@@ -113,16 +117,26 @@ async def confirm_order(callback: CallbackQuery, state: FSMContext, session: Asy
     db_user = await get_user_by_telegram_id(session, callback.from_user.id)
     delivery_type = DeliveryType(data["delivery_type"])
 
-    order = await create_order_with_statistics(
-        session,
-        user_id=db_user.id,
-        phone=db_user.phone_number or "",
-        delivery_type=delivery_type,
-        address=data.get("address"),
-        cart_items=cart,
-        latitude=data.get("latitude"),
-        longitude=data.get("longitude"),
-    )
+    try:
+        order = await create_order_with_statistics(
+            session,
+            user_id=db_user.id,
+            phone=db_user.phone_number or "",
+            delivery_type=delivery_type,
+            address=data.get("address"),
+            cart_items=cart,
+            latitude=data.get("latitude"),
+            longitude=data.get("longitude"),
+        )
+    except InsufficientStockError as exc:
+        # Boshqa xaridor shu orada sotib ulgurgan — buyurtma yaratilmaydi,
+        # foydalanuvchiga aniq nima yetishmayotgani ko'rsatiladi. Savat
+        # o'zgarishsiz qoladi — u miqdorni kamaytirib qayta urinishi mumkin.
+        await callback.answer(
+            get_text("not_enough_stock_named", lang, name=exc.product_name, stock=exc.available),
+            show_alert=True,
+        )
+        return
 
     await clear_cart(callback.from_user.id)
     await state.clear()

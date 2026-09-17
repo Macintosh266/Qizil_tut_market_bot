@@ -47,6 +47,7 @@ class AdminPanelStates(StatesGroup):
     # Do'kon boshqaruvi
     waiting_add_market_name = State()
     waiting_add_market_address = State()
+    waiting_billz_secret_key = State()
     waiting_delete_market_name = State()
     waiting_confirm_delete_market = State()
 

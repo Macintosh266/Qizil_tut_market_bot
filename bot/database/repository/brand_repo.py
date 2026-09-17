@@ -21,6 +21,13 @@ async def get_brand_by_name(session: AsyncSession, name: str) -> BrandModel | No
     return result.scalar_one_or_none()
 
 
+async def get_or_create_brand(session: AsyncSession, name: str) -> BrandModel:
+    brand = await get_brand_by_name(session, name)
+    if brand:
+        return brand
+    return await create_brand(session, name)
+
+
 async def get_all_brands(session: AsyncSession) -> list[BrandModel]:
     result = await session.execute(select(BrandModel).order_by(BrandModel.name))
     return list(result.scalars().all())

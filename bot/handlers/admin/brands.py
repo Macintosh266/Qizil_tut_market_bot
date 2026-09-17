@@ -31,7 +31,7 @@ async def start_add_brand(message: Message, state: FSMContext, lang: str):
     await message.answer(get_employe_text("add_brand_prompt", lang), reply_markup=cancel_kb(lang))
 
 
-@router.message(AdminPanelStates.waiting_add_brand_name, F.text)
+@router.message(AdminPanelStates.waiting_add_brand_name, IsSuperAdmin(), F.text)
 async def process_add_brand_name(message: Message, session: AsyncSession, lang: str, state: FSMContext):
     name = message.text.strip()
     existing = await get_brand_by_name(session, name)
@@ -55,7 +55,7 @@ async def start_delete_brand(message: Message, session: AsyncSession, lang: str,
     )
 
 
-@router.callback_query(F.data.startswith("db_pick:"))
+@router.callback_query(IsSuperAdmin(), F.data.startswith("db_pick:"))
 async def pick_delete_brand(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext):
     brand_id = int(callback.data.split(":")[1])
     brand = await get_brand(session, brand_id)
@@ -75,7 +75,7 @@ async def pick_delete_brand(callback: CallbackQuery, session: AsyncSession, lang
     await callback.answer()
 
 
-@router.message(AdminPanelStates.waiting_confirm_delete_brand, F.text.func(lambda t: t in CONFIRM_TEXTS))
+@router.message(AdminPanelStates.waiting_confirm_delete_brand, IsSuperAdmin(), F.text.func(lambda t: t in CONFIRM_TEXTS))
 async def process_confirm_delete_brand(message: Message, session: AsyncSession, lang: str, state: FSMContext):
     data = await state.get_data()
     brand = await get_brand(session, data["brand_id"])

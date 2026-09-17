@@ -23,6 +23,7 @@ from bot.keyboards.admin_kb import (
     admin_panel_kb,
     ban_management_kb,
     brand_management_kb,
+    catalog_management_kb,
     category_management_kb,
     market_admin_panel_kb,
     market_management_kb,
@@ -53,6 +54,7 @@ _ALL_WAITING_STATES = [
     AdminPanelStates.waiting_unban_id,
     AdminPanelStates.waiting_add_market_name,
     AdminPanelStates.waiting_add_market_address,
+    AdminPanelStates.waiting_billz_secret_key,
     AdminPanelStates.waiting_delete_market_name,
     AdminPanelStates.waiting_confirm_delete_market,
     AdminPanelStates.waiting_add_product_market,
@@ -92,10 +94,11 @@ CONFIRM_TEXTS = frozenset(get_employe_text("confirm_btn", l) for l in ("uz", "ru
 _ALL_ADMIN_BUTTON_KEYS = [
     "admin_menu", "admin_management_btn", "staff_management_btn", "ban_management_btn",
     "market_management_btn", "product_management_btn", "statistics_btn", "back_btn",
+    "catalog_management_btn",
     "add_admin_btn", "delete_admin_btn", "admin_list_btn",
     "add_staff_btn", "delete_staff_btn", "staff_list_btn",
     "ban_user_btn", "unban_user_btn",
-    "add_market_btn", "delete_market_btn", "market_list_btn",
+    "add_market_btn", "delete_market_btn", "market_list_btn", "link_billz_btn", "sync_billz_btn", "orders_list_btn",
     "add_product_btn", "delete_product_btn", "product_list_btn", "edit_product_price_btn",
     "category_management_btn", "add_category_btn", "delete_category_btn", "category_list_btn",
     "brand_management_btn", "add_brand_btn", "delete_brand_btn", "brand_list_btn",
@@ -137,6 +140,7 @@ def kb_for_level(level: str, lang: str, is_super_admin: bool = False):
         "staff_mgmt": staff_management_kb,
         "ban_mgmt": ban_management_kb,
         "market_mgmt": market_management_kb,
+        "catalog_mgmt": catalog_management_kb,
         "product_mgmt": product_management_kb,
         "category_mgmt": category_management_kb,
         "brand_mgmt": brand_management_kb,
@@ -144,6 +148,17 @@ def kb_for_level(level: str, lang: str, is_super_admin: bool = False):
     if level in mapping:
         return mapping[level](lang)
     return (admin_panel_kb if is_super_admin else market_admin_panel_kb)(lang)
+
+
+# Ba'zi submenyular endi boshqa submenyu ICHIDA joylashgan (masalan Mahsulot/
+# Kategoriya/Brend — "Mahsulotlar bo'limi" ichida). "Orqaga" bosilganda shu
+# ota-menyuga qaytish uchun — faqat SUPER_ADMIN uchun (oddiy ADMIN'da bunday
+# oraliq menyu yo'q, uning "orqaga"si to'g'ridan-to'g'ri asosiy panelga qaytadi).
+_PARENT_LEVEL = {
+    "product_mgmt": "catalog_mgmt",
+    "category_mgmt": "catalog_mgmt",
+    "brand_mgmt": "catalog_mgmt",
+}
 
 
 async def finish(message: Message, state: FSMContext, lang: str, text: str) -> None:
@@ -165,8 +180,26 @@ async def finish_cb(callback: CallbackQuery, state: FSMContext, lang: str, text:
         await callback.message.delete()
     except Exception:
         pass
-    await callback.message.answer(text, reply_markup=kb_for_level(level, lang, is_super_admin))
+    sent = await callback.message.answer(text, reply_markup=kb_for_level(level, lang, is_super_admin))
+    await state.update_data(nav_chat_id=sent.chat.id, nav_message_id=sent.message_id)
     await callback.answer()
+
+
+# async def nav_answer(message: Message, state: FSMContext, text: str, reply_markup=None) -> Message:
+#     """Admin panel navigatsiya xabarini yuboradi — avval OLDINGI navigatsiya
+#     xabarini (agar bo'lsa) o'chirib, keyin yangisini yuboradi. Shu tufayli
+#     'Do'kon boshqaruvi -> Orqaga -> Mahsulotlar bo'limi -> ...' kabi ketma-ket
+#     bosishlarda eski xabarlar chatda cheksiz to'planib qolmaydi."""
+#     data = await state.get_data()
+#     prev_chat_id, prev_message_id = data.get("nav_chat_id"), data.get("nav_message_id")
+#     if prev_chat_id and prev_message_id:
+#         try:
+#             await message.bot.delete_message(prev_chat_id, prev_message_id)
+#         except Exception:
+#             pass
+#     sent = await message.answer(text, reply_markup=reply_markup)
+#     await state.update_data(nav_chat_id=sent.chat.id, nav_message_id=sent.message_id)
+#     return sent
 
 
 async def track_list_message(state: FSMContext, message: Message) -> None:
@@ -230,6 +263,13 @@ async def open_market_management(message: Message, state: FSMContext, lang: str)
     await message.answer(get_employe_text("market_management_btn", lang), reply_markup=market_management_kb(lang))
 
 
+@router.message(IsSuperAdmin(), F.text.func(lambda t: t in btn_texts("catalog_management_btn")))
+async def open_catalog_management(message: Message, state: FSMContext, lang: str):
+    await state.set_state(None)
+    await state.update_data(menu_level="catalog_mgmt")
+    await message.answer(get_employe_text("catalog_management_btn", lang), reply_markup=catalog_management_kb(lang))
+
+
 @router.message(F.text.func(lambda t: t in btn_texts("product_management_btn")))
 async def open_product_management(message: Message, state: FSMContext, lang: str):
     await state.set_state(None)
@@ -268,12 +308,23 @@ async def go_back(message: Message, state: FSMContext, lang: str):
     await state.set_state(None)
 
     if level == "root":
+        prev_chat_id, prev_message_id = data.get("nav_chat_id"), data.get("nav_message_id")
+        if prev_chat_id and prev_message_id:
+            try:
+                await message.bot.delete_message(prev_chat_id, prev_message_id)
+            except Exception:
+                pass
         await state.clear()
         await message.answer("📋", reply_markup=main_menu_kb(lang, is_admin=True))
+        return
+
+    parent = _PARENT_LEVEL.get(level, "root") if is_super_admin else "root"
+    await state.update_data(menu_level=parent)
+    if parent == "root":
+        text = get_employe_text("admin_panel_welcome", lang)
     else:
-        await state.update_data(menu_level="root")
-        kb = admin_panel_kb(lang) if is_super_admin else market_admin_panel_kb(lang)
-        await message.answer(get_employe_text("admin_panel_welcome", lang), reply_markup=kb)
+        text = get_employe_text("catalog_management_btn", lang)
+    await message.answer(text, reply_markup=kb_for_level(parent, lang, is_super_admin))
 
 
 # ==================== BEKOR QILISH ====================

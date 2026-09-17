@@ -32,7 +32,7 @@ async def start_add_category(message: Message, state: FSMContext, lang: str):
     await message.answer(get_employe_text("add_category_prompt", lang), reply_markup=cancel_kb(lang))
 
 
-@router.message(AdminPanelStates.waiting_add_category_name, F.text)
+@router.message(AdminPanelStates.waiting_add_category_name, IsSuperAdmin(), F.text)
 async def process_add_category_name(message: Message, session: AsyncSession, lang: str, state: FSMContext):
     name = message.text.strip()
     existing = await get_category_by_name(session, name)
@@ -56,7 +56,7 @@ async def start_delete_category(message: Message, session: AsyncSession, lang: s
     )
 
 
-@router.callback_query(F.data.startswith("dc_pick:"))
+@router.callback_query(IsSuperAdmin(), F.data.startswith("dc_pick:"))
 async def pick_delete_category(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext):
     category_id = int(callback.data.split(":")[1])
     category = await get_category(session, category_id)
@@ -81,7 +81,7 @@ async def pick_delete_category(callback: CallbackQuery, session: AsyncSession, l
     await callback.answer()
 
 
-@router.message(AdminPanelStates.waiting_confirm_delete_category, F.text.func(lambda t: t in CONFIRM_TEXTS))
+@router.message(AdminPanelStates.waiting_confirm_delete_category, IsSuperAdmin(), F.text.func(lambda t: t in CONFIRM_TEXTS))
 async def process_confirm_delete_category(message: Message, session: AsyncSession, lang: str, state: FSMContext):
     data = await state.get_data()
     category = await get_category(session, data["category_id"])

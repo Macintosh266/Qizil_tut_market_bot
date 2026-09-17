@@ -38,7 +38,9 @@ def admin_panel_commands_kb(lang: str) -> InlineKeyboardMarkup:
 # ==================== REPLY KEYBOARD TUGMALAR ====================
 
 def admin_panel_kb(lang: str) -> ReplyKeyboardMarkup:
-    """SUPER_ADMIN uchun to'liq panel — barcha do'konlarni boshqarish imkoniyati bilan."""
+    """SUPER_ADMIN uchun to'liq panel — barcha do'konlarni boshqarish imkoniyati bilan.
+    Mahsulot/Kategoriya/Brend boshqaruvi bitta 'Mahsulotlar bo'limi' submenyusiga
+    yig'ilgan — asosiy panelda tugmalar kamroq bo'lishi uchun."""
     keyboard = [
         [
             KeyboardButton(text=get_employe_text("admin_management_btn", lang)),
@@ -47,17 +49,30 @@ def admin_panel_kb(lang: str) -> ReplyKeyboardMarkup:
         ],
         [
             KeyboardButton(text=get_employe_text("ban_management_btn", lang)),
-            KeyboardButton(text=get_employe_text("product_management_btn", lang)),
-        ],
-        [
-            KeyboardButton(text=get_employe_text("category_management_btn", lang)),
-            KeyboardButton(text=get_employe_text("brand_management_btn", lang)),
+            KeyboardButton(text=get_employe_text("catalog_management_btn", lang)),
         ],
         [
             KeyboardButton(text=get_employe_text("statistics_btn", lang)),
             KeyboardButton(text=get_employe_text("feedback_management_btn", lang)),
         ],
-        [KeyboardButton(text=get_text("menu_settings", lang))],
+        [
+            KeyboardButton(text=get_employe_text("orders_list_btn", lang)),
+            KeyboardButton(text=get_text("menu_settings", lang))
+        ],
+    ]
+    return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
+
+
+def catalog_management_kb(lang: str) -> ReplyKeyboardMarkup:
+    """'Mahsulotlar bo'limi' submenyusi — Mahsulot/Kategoriya/Brend boshqaruvi
+    shu yerga yig'ilgan (faqat SUPER_ADMIN uchun)."""
+    keyboard = [
+        [KeyboardButton(text=get_employe_text("product_management_btn", lang))],
+        [
+            KeyboardButton(text=get_employe_text("category_management_btn", lang)),
+            KeyboardButton(text=get_employe_text("brand_management_btn", lang)),
+        ],
+        [KeyboardButton(text=get_employe_text("back_btn", lang))],
     ]
     return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
 
@@ -76,9 +91,9 @@ def market_admin_panel_kb(lang: str) -> ReplyKeyboardMarkup:
             KeyboardButton(text=get_employe_text("statistics_btn", lang)),
         ],
         [KeyboardButton(text=get_employe_text("feedback_management_btn", lang)),
-        KeyboardButton(text=get_text("menu_settings", lang)),
+        KeyboardButton(text=get_employe_text("orders_list_btn", lang)),
         ],
-        
+        [KeyboardButton(text=get_text("menu_settings", lang))],
     ]
     return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
 
@@ -121,6 +136,8 @@ def market_management_kb(lang: str) -> ReplyKeyboardMarkup:
         [KeyboardButton(text=get_employe_text("add_market_btn", lang))],
         [KeyboardButton(text=get_employe_text("delete_market_btn", lang))],
         [KeyboardButton(text=get_employe_text("market_list_btn", lang))],
+        [KeyboardButton(text=get_employe_text("link_billz_btn", lang))],
+        [KeyboardButton(text=get_employe_text("sync_billz_btn", lang))],
         [KeyboardButton(text=get_employe_text("back_btn", lang))],
     ]
     return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
@@ -297,6 +314,19 @@ def product_list_kb(products: list, lang: str) -> InlineKeyboardMarkup:
 
 # ==================== TANLASH (SELECT) TUGMALARI — matn kiritish o'rniga ====================
 
+def has_billz_kb(market_id: int, lang: str) -> InlineKeyboardMarkup:
+    """Yangi do'kon qo'shilgandan keyin — 'Bu do'konda Billz tizimi bormi?'
+    savoliga javob tugmalari."""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text=get_employe_text("yes_btn", lang), callback_data=f"new_market_billz:yes:{market_id}"),
+                InlineKeyboardButton(text=get_employe_text("no_btn", lang), callback_data=f"new_market_billz:no:{market_id}"),
+            ]
+        ]
+    )
+
+
 def markets_select_kb(markets: list, callback_prefix: str, lang: str) -> InlineKeyboardMarkup:
     """Do'konlar ro'yxatidan bittasini tanlash (o'chirish, mahsulot qo'shish va h.k. uchun)."""
     buttons = [
@@ -420,3 +450,63 @@ def feedback_nav_kb(offset: int, total: int, is_reviewed: bool, feedback_id: int
         [InlineKeyboardButton(text=get_employe_text("close_btn", lang), callback_data="fb_close")]
     )
     return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+# ==================== BUYURTMALAR RO'YXATI (holat bo'yicha, sahifalab) ====================
+
+def orders_status_kb(lang: str) -> InlineKeyboardMarkup:
+    """'📦 Buyurtmalar' bosilganda chiqadigan holat-filtr tugmalari."""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=get_employe_text("order_status_new", lang), callback_data="ord_status:new")],
+            [InlineKeyboardButton(text=get_employe_text("order_status_confirmed", lang), callback_data="ord_status:confirmed")],
+            [InlineKeyboardButton(text=get_employe_text("order_status_canceled", lang), callback_data="ord_status:canceled")],
+        ]
+    )
+
+
+def orders_page_kb(orders: list, status_key: str, page: int, total_pages: int, lang: str) -> InlineKeyboardMarkup:
+    """Bitta holatdagi buyurtmalar ro'yxati — har biri alohida qatorda
+    (buyurtma raqami + mijoz + summa), pastda sahifalash (◀️ 1/2 ▶️)."""
+    buttons = []
+    for order in orders:
+        customer = order.user.full_name if order.user else "-"
+        label = f"#{order.id} — {customer} — {order.total_price:,.0f}"
+        buttons.append([InlineKeyboardButton(text=label, callback_data=f"ord_view:{order.id}:{status_key}:{page}")])
+
+    if total_pages > 1:
+        nav_row = []
+        if page > 0:
+            nav_row.append(InlineKeyboardButton(text="◀️", callback_data=f"ord_page:{status_key}:{page - 1}"))
+        nav_row.append(InlineKeyboardButton(text=f"{page + 1}/{total_pages}", callback_data="noop_page"))
+        if page < total_pages - 1:
+            nav_row.append(InlineKeyboardButton(text="▶️", callback_data=f"ord_page:{status_key}:{page + 1}"))
+        buttons.append(nav_row)
+
+    buttons.append(
+        [InlineKeyboardButton(text=get_employe_text("close_btn", lang), callback_data="fb_close")]
+    )
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def order_detail_back_kb(status_key: str, page: int, lang: str) -> InlineKeyboardMarkup:
+    """Buyurtma tafsilotidan ro'yxatga qaytish tugmasi."""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=get_employe_text("back_btn", lang), callback_data=f"ord_page:{status_key}:{page}")]
+        ]
+    )
+
+
+def order_detail_action_kb(order_id: int, status_key: str, page: int, lang: str) -> InlineKeyboardMarkup:
+    """Buyurtma tafsiloti uchun — YANGI (NEW) holatdagi buyurtmalarda
+    Qabul qilish/Rad etish tugmalari, pastda ro'yxatga qaytish."""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text=get_employe_text("accept_order_btn", lang), callback_data=f"staff_accept:{order_id}"),
+                InlineKeyboardButton(text=get_employe_text("reject_order_btn", lang), callback_data=f"staff_reject:{order_id}"),
+            ],
+            [InlineKeyboardButton(text=get_employe_text("back_btn", lang), callback_data=f"ord_page:{status_key}:{page}")],
+        ]
+    )

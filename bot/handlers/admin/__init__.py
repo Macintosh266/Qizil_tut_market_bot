@@ -7,6 +7,7 @@ from bot.handlers.admin.brands import router as brands_router
 from bot.handlers.admin.categories import router as categories_router
 from bot.handlers.admin.feedbacks import router as feedbacks_router
 from bot.handlers.admin.markets import router as markets_router
+from bot.handlers.admin.orders_list import router as orders_list_router
 from bot.handlers.staff.orders import router as orders_router
 from bot.handlers.admin.products import router as products_router
 
@@ -31,4 +32,5 @@ def get_admin_router() -> Router:
     router.include_router(statistics_router)
     router.include_router(feedbacks_router)
     router.include_router(orders_router)
+    router.include_router(orders_list_router)
     return router

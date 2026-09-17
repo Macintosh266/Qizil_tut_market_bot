@@ -2,9 +2,40 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from bot.database.repository.product_repo import decrease_stock, get_product, increase_stock
+from bot.database.repository.product_repo import decrease_stock, increase_stock
 from bot.enums.enum import DeliveryType, OrderStatus
-from bot.models import OrderItemModel, OrderModel, StatisticModel
+from bot.models import OrderItemModel, OrderModel, ProductsModel, StatisticModel
+
+
+class InsufficientStockError(Exception):
+    """Buyurtma yaratish paytida mahsulot omborda yetarli emasligi
+    aniqlansa ko'tariladi (checkout.py bu xatoni ushlab, mijozga
+    tushunarli xabar beradi)."""
+
+    def __init__(self, product_name: str, available: int):
+        self.product_name = product_name
+        self.available = available
+        super().__init__(f"Omborda yetarli emas: {product_name} (mavjud: {available})")
+
+
+async def get_product_for_update(session: AsyncSession, product_id: int) -> ProductsModel | None:
+    """
+    Mahsulotni QATOR DARAJASIDA QULFLAB (`SELECT ... FOR UPDATE`) o'qiydi.
+
+    Nega kerak: bu qulflashsiz, agar ikki xaridor BIR VAQTDA (masalan
+    omborda 1 dona qolgan mahsulotni) buyurtma qilsa, ikkalasi ham
+    "stock=1" ni o'qib, ikkalasi ham muvaffaqiyatli buyurtma bera olardi —
+    natijada omborda -1 (yoki noto'g'ri 0) qolib, aslida 2 marta sotilgan
+    bo'lib chiqardi ("lost update" muammosi).
+
+    `FOR UPDATE` shu qatorni joriy tranzaksiya commit/rollback bo'lguncha
+    qulflab qo'yadi — ikkinchi so'rov birinchisi tugaguncha KUTADI, shundan
+    keyingina eng so'nggi (to'g'ri) `stock` qiymatini o'qiydi.
+    """
+    result = await session.execute(
+        select(ProductsModel).where(ProductsModel.id == product_id).with_for_update()
+    )
+    return result.scalar_one_or_none()
 
 
 async def create_order_with_statistics(
@@ -35,9 +66,15 @@ async def create_order_with_statistics(
     await session.flush()  # order.id olish uchun
 
     for product_id, quantity in cart_items.items():
-        product = await get_product(session, product_id)
+        product = await get_product_for_update(session, product_id)
         if not product:
             continue
+
+        if quantity > product.stock:
+            # Boshqa xaridor shu orada sotib ulgurgan bo'lishi mumkin —
+            # tranzaksiyani bekor qilib, checkout.py'ga aniq xato beramiz.
+            await session.rollback()
+            raise InsufficientStockError(product.name, product.stock)
 
         item_price = float(product.price)
         total += item_price * quantity
@@ -103,6 +140,22 @@ async def get_new_orders(session: AsyncSession) -> list[OrderModel]:
         )
         .where(OrderModel.status == OrderStatus.NEW)
         .order_by(OrderModel.create_data)
+    )
+    return list(result.scalars().all())
+
+
+async def get_orders_by_status(session: AsyncSession, status: OrderStatus) -> list[OrderModel]:
+    """Berilgan holatdagi barcha buyurtmalar (eng yangisidan boshlab).
+    Mahsulot+do'kon ma'lumoti bilan birga (eager load) — do'kon bo'yicha
+    filtrlashni chaqiruvchi tomonda (Python'da) qilish uchun."""
+    result = await session.execute(
+        select(OrderModel)
+        .options(
+            selectinload(OrderModel.items).selectinload(OrderItemModel.product),
+            selectinload(OrderModel.user),
+        )
+        .where(OrderModel.status == status)
+        .order_by(OrderModel.create_data.desc())
     )
     return list(result.scalars().all())
 

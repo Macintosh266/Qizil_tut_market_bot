@@ -31,7 +31,7 @@ async def start_ban(message: Message, state: FSMContext, lang: str):
 
 
 @router.message(AdminPanelStates.waiting_ban_id, F.text)
-async def process_ban_interactive(message: Message, session: AsyncSession, lang: str, state: FSMContext):
+async def process_ban_interactive(message: Message, session: AsyncSession, lang: str, state: FSMContext, db_user: UserModel):
     user = await get_user_by_id_or_username(session, message.text.strip())
     if not user:
         await message.answer(get_employe_text("user_not_found", lang))
@@ -40,6 +40,10 @@ async def process_ban_interactive(message: Message, session: AsyncSession, lang:
         await finish(message, state, lang, get_employe_text("user_already_banned", lang, name=user.full_name))
         return
     if user.role == UserRole.SUPER_ADMIN:
+        await message.answer(get_employe_text("super_admin_ban", lang))
+        return
+    if user.role == UserRole.ADMIN and db_user.role != UserRole.SUPER_ADMIN:
+        # Oddiy admin boshqa adminni ban qila olmaydi — faqat SUPER_ADMIN
         await message.answer(get_employe_text("super_admin_ban", lang))
         return
 

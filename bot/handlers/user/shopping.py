@@ -22,7 +22,7 @@ from bot.keyboards.user_kb import (
 )
 from bot.lexicons import get_text
 from bot.lexicons.lexicon_employe import get_employe_text
-from bot.redis import add_to_cart
+from bot.redis import add_to_cart, get_cart
 from bot.states import Shopping
 
 router = Router(name="shopping")
@@ -210,7 +210,7 @@ async def search_in_market(message: Message, session: AsyncSession, lang: str, s
 
 
 @router.callback_query(F.data.startswith("product:"))
-async def show_product_detail(callback: CallbackQuery, session: AsyncSession, lang: str):
+async def show_product_detail(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext):
     _, market_id, ftype, fid, page, product_id = callback.data.split(":")
     market_id, fid, page, product_id = int(market_id), int(fid), int(page), int(product_id)
 
@@ -218,6 +218,18 @@ async def show_product_detail(callback: CallbackQuery, session: AsyncSession, la
     if not product:
         await callback.answer(get_text("product_not_found", lang), show_alert=True)
         return
+
+    # Mahsulotlar ro'yxati xabari (agar shu yerdan kelingan bo'lsa) o'chiriladi —
+    # tafsilot xabari uning o'rnini bosadi (masalan rasmli bo'lsa, tahrirlash
+    # o'rniga yangi xabar yuborish shart, shuning uchun eskisini o'chiramiz).
+    data = await state.get_data()
+    list_chat_id = data.get("products_chat_id")
+    list_message_id = data.get("products_message_id")
+    if list_chat_id and list_message_id and callback.message.message_id == list_message_id:
+        try:
+            await callback.message.delete()
+        except Exception:
+            pass
 
     text = (
         f"<b>{product.name}</b>\n\n"
@@ -362,6 +374,18 @@ async def add_product_to_cart(callback: CallbackQuery, session: AsyncSession, la
     if quantity > product.stock:
         await callback.answer(get_text("not_enough_stock", lang, stock=product.stock), show_alert=True)
         return
+
+    # Savatda BOSHQA do'kondan mahsulot bo'lsa, aralashtirmaymiz — aks holda
+    # bitta buyurtma bir nechta do'konga bo'linib ketib, checkout va admin
+    # tomonida chalkashlik keltirib chiqaradi. Foydalanuvchi avval savatini
+    # bo'shatishi (buyurtma berishi yoki tozalashi) kerak bo'ladi.
+    existing_cart = await get_cart(callback.from_user.id)
+    if existing_cart and product_id not in existing_cart:
+        for existing_product_id in existing_cart:
+            existing_product = await get_product(session, existing_product_id)
+            if existing_product and existing_product.market_id != product.market_id:
+                await callback.answer(get_text("cart_different_market", lang), show_alert=True)
+                return
 
     await add_to_cart(callback.from_user.id, product_id, quantity)
     await callback.answer(get_text("added_to_cart", lang))

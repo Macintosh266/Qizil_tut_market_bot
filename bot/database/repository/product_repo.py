@@ -203,3 +203,104 @@ async def get_stock_summary(session: AsyncSession, market_id: int | None = None)
     total_qty = sum(p.stock for p in products)
     total_sum = sum(p.stock * float(p.price) for p in products)
     return total_qty, total_sum
+
+
+# ==================== Billz.io integratsiyasi ====================
+
+async def get_product_by_billz_id(session: AsyncSession, billz_product_id: str) -> ProductsModel | None:
+    result = await session.execute(
+        select(ProductsModel).where(ProductsModel.billz_product_id == billz_product_id)
+    )
+    return result.scalar_one_or_none()
+
+
+async def upsert_product_from_billz(
+    session: AsyncSession,
+    *,
+    billz_product_id: str,
+    market_id: int,
+    category_id: int,
+    brand_id: int | None,
+    name: str,
+    price: float,
+    stock: int,
+    description: str | None = None,
+    image_file_id: str | None = None,
+) -> tuple[ProductsModel, bool]:
+    """
+    Billz'dan kelgan mahsulotni bazaga yozadi: `billz_product_id` bo'yicha
+    mavjud mahsulot topilsa — uni YANGILAYDI (narx/son/nom/kategoriya/brend),
+    topilmasa — YANGI mahsulot yaratadi. Qaytaradi: (product, created).
+
+    `image_file_id` faqat berilgan bo'lsagina yoziladi — bo'sh (None)
+    bo'lsa, mahsulotning mavjud rasmi (agar bor bo'lsa, jumladan admin
+    qo'lda yuklagan rasm ham) o'zgartirilmaydi.
+
+    Bu — botning o'zida qo'lda qo'shilgan mahsulotlardan alohida: qo'lda
+    qo'shilgan mahsulotlarning `billz_product_id`si NULL bo'lib qoladi va
+    bu funksiya ularga tegmaydi.
+    """
+    product = await get_product_by_billz_id(session, billz_product_id)
+
+    if product:
+        product.market_id = market_id
+        product.category_id = category_id
+        product.brand_id = brand_id
+        product.name = name
+        product.price = price
+        product.stock = stock
+        if description:
+            product.discription = description
+        if image_file_id:
+            product.image_file_id = image_file_id
+        await session.commit()
+        await session.refresh(product)
+        return product, False
+
+    product = ProductsModel(
+        billz_product_id=billz_product_id,
+        market_id=market_id,
+        category_id=category_id,
+        brand_id=brand_id,
+        name=name,
+        price=price,
+        stock=stock,
+        discription=description,
+        image_file_id=image_file_id,
+    )
+    session.add(product)
+    await session.commit()
+    await session.refresh(product)
+    return product, True
+
+
+async def deactivate_missing_billz_products(
+    session: AsyncSession, market_id: int, seen_billz_ids: set[str]
+) -> int:
+    """
+    Sinxronizatsiya paytida Billz ro'yxatida ENDI YO'Q (ya'ni Billz'da
+    o'chirilgan) mahsulotlarni botda ham DEAKTIVATSIYA qiladi (`is_active =
+    False`). To'liq (hard) o'chirmaymiz — chunki eski buyurtmalar
+    (`OrderItemModel`) shu mahsulotga bog'langan bo'lishi mumkin, uni
+    o'chirish buyurtma tarixini buzadi.
+
+    Qaytaradi: deaktivatsiya qilingan mahsulotlar soni.
+    """
+    result = await session.execute(
+        select(ProductsModel).where(
+            ProductsModel.market_id == market_id,
+            ProductsModel.billz_product_id.is_not(None),
+            ProductsModel.is_active.is_(True),
+        )
+    )
+    products = result.scalars().all()
+
+    count = 0
+    for product in products:
+        if product.billz_product_id not in seen_billz_ids:
+            product.is_active = False
+            count += 1
+
+    if count:
+        await session.commit()
+    return count

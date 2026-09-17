@@ -6,47 +6,48 @@ Ko'p do'konli onlayn-savdo boti. Ko'p tillik (🇺🇿 o'zbek, 🇷🇺 rus, �
 
 ## Loyiha tuzilishi
 
+```
 qizil_tut_market_bot/
 ├── bot/
-│ ├── config.py # .env sozlamalari
-│ ├── enums/enum.py # UserRole, Language, OrderStatus, DeliveryType
-│ ├── models/ # SQLAlchemy class-based modellar
-│ │ ├── abstract_models.py # BaseModels (create_data/update_data)
-│ │ ├── user_model.py # UserModel, Address
-│ │ ├── market_model.py # MarketModel
-│ │ ├── category_model.py # CategoryModel
-│ │ ├── brand_model.py # BrandModel (mahsulot brendi, ixtiyoriy)
-│ │ ├── product_model.py # ProductsModel
-│ │ ├── order_model.py # OrderModel, OrderItemModel
-│ │ ├── statistic_model.py # StatisticModel (har bir sotuv uchun log)
-│ │ └── feedback_model.py # FeedbackModel (foydalanuvchi fikrlari)
-│ ├── database/
-│ │ ├── engine.py # async engine/session, init_db()
-│ │ └── repository/ # CRUD funksiyalar (domen bo'yicha bo'lingan)
-│ ├── redis/redis_client.py # Savat (cart) — Redis hash
-│ ├── lexicons/ # uz/ru/en tarjimalar (dictionary-based)
-│ ├── states/states.py # FSM holatlari
-│ ├── keyboards/ # Inline/Reply klaviaturalar
-│ ├── filters/role_filters.py # IsAdmin, IsSuperAdmin, IsStaff
-│ ├── middlewares/
-│ │ ├── database.py # har update uchun DB session
-│ │ └── user_context.py # db_user, lang, ban tekshiruvi
-│ ├── utils/
-│ │ ├── args.py # qo'shtirnoqli argumentlarni ajratish
-│ │ ├── commands.py # rolga qarab bot komandalarini sozlash
-│ │ └── period.py # statistika sana formatlarini tahlil qilish
-│ ├── assets/logo.jpg # /start'da ko'rsatiladigan logotip
-│ └── handlers/
-│ ├── common/ # /start, til tanlash, ro'yxatdan o'tish, /help
-│ ├── user/ # xarid, savat, checkout, profil, sozlamalar, fikr
-│ ├── admin/ # mahsulot/kategoriya/brend/do'kon/ban/statistika/buyurtma
-│ └── staff/orders.py # buyurtma qabul qilish (hozircha ulanmagan)
-├── sql/add_brand_and_feedback.sql # mavjud bazaga qo'shimcha ustun/jadval qo'shish uchun
+│   ├── config.py                 # .env sozlamalari
+│   ├── enums/enum.py             # UserRole, Language, OrderStatus, DeliveryType
+│   ├── models/                   # SQLAlchemy class-based modellar
+│   │   ├── abstract_models.py    # BaseModels (create_data/update_data)
+│   │   ├── user_model.py         # UserModel, Address
+│   │   ├── market_model.py       # MarketModel
+│   │   ├── category_model.py     # CategoryModel
+│   │   ├── brand_model.py        # BrandModel (mahsulot brendi, ixtiyoriy)
+│   │   ├── product_model.py      # ProductsModel
+│   │   ├── order_model.py        # OrderModel, OrderItemModel
+│   │   ├── statistic_model.py    # StatisticModel (har bir sotuv uchun log)
+│   │   └── feedback_model.py     # FeedbackModel (foydalanuvchi fikrlari)
+│   ├── database/
+│   │   ├── engine.py             # async engine/session, init_db()
+│   │   └── repository/           # CRUD funksiyalar (domen bo'yicha bo'lingan)
+│   ├── redis/redis_client.py     # Savat (cart) — Redis hash
+│   ├── lexicons/                 # uz/ru/en tarjimalar (dictionary-based)
+│   ├── states/states.py          # FSM holatlari
+│   ├── keyboards/                # Inline/Reply klaviaturalar
+│   ├── filters/role_filters.py   # IsAdmin, IsSuperAdmin, IsStaff
+│   ├── middlewares/
+│   │   ├── database.py           # har update uchun DB session
+│   │   └── user_context.py       # db_user, lang, ban tekshiruvi
+│   ├── utils/
+│   │   ├── args.py               # qo'shtirnoqli argumentlarni ajratish
+│   │   ├── commands.py           # rolga qarab bot komandalarini sozlash
+│   │   └── period.py             # statistika sana formatlarini tahlil qilish
+│   ├── assets/logo.jpg           # /start'da ko'rsatiladigan logotip
+│   └── handlers/
+│       ├── common/               # /start, til tanlash, ro'yxatdan o'tish, /help
+│       ├── user/                 # xarid, savat, checkout, profil, sozlamalar, fikr
+│       ├── admin/                # mahsulot/kategoriya/brend/do'kon/ban/statistika/buyurtma
+│       └── staff/orders.py       # buyurtma qabul qilish (hozircha ulanmagan)
+├── sql/add_brand_and_feedback.sql   # mavjud bazaga qo'shimcha ustun/jadval qo'shish uchun
 ├── main.py
 ├── requirements.txt
 ├── docker-compose.yml
 └── .env.example
-
+```
 
 ## Texnologiyalar nima uchun ishlatilgan
 

@@ -17,6 +17,7 @@ class ProductsModel(BaseModels):
     image_file_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     stock: Mapped[int] = mapped_column(default=0)
     is_active: Mapped[bool] = mapped_column(default=True)
+    billz_product_id: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
 
     market: Mapped["MarketModel"] = relationship(back_populates="products")
     category: Mapped["CategoryModel"] = relationship(back_populates="products")

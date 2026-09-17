@@ -12,6 +12,7 @@ from bot.database.engine import init_db
 from bot.handlers import get_main_router
 from bot.middlewares.database import DatabaseMiddleware
 from bot.middlewares.user_context import UserContextMiddleware
+from bot.services.billz_sync import billz_sync_loop
 from bot.utils.commands import set_default_commands, set_role_based_commands
 
 logging.basicConfig(level=logging.INFO)
@@ -46,6 +47,11 @@ async def main() -> None:
     await set_role_based_commands(bot)
 
     await bot.delete_webhook(drop_pending_updates=True)
+
+    # Billz.io bilan mahsulotlarni davriy sinxronlash (agar BILLZ_SYNC_ENABLED=true bo'lsa)
+    # — asosiy pollingga xalaqit bermasligi uchun alohida fon vazifasi sifatida
+    asyncio.create_task(billz_sync_loop(bot))
+
     await dp.start_polling(bot)
 
 

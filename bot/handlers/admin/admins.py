@@ -38,7 +38,7 @@ async def start_add_admin(message: Message, session: AsyncSession, lang: str, st
     await track_list_message(state, sent)
 
 
-@router.callback_query(F.data.startswith("aa_market_pick:"))
+@router.callback_query(IsSuperAdmin(), F.data.startswith("aa_market_pick:"))
 async def pick_add_admin_market(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext):
     market_id = int(callback.data.split(":")[1])
     market = await get_market(session, market_id)
@@ -58,7 +58,7 @@ async def pick_add_admin_market(callback: CallbackQuery, session: AsyncSession, 
     await callback.answer()
 
 
-@router.message(AdminPanelStates.waiting_add_admin_id, F.text)
+@router.message(AdminPanelStates.waiting_add_admin_id, IsSuperAdmin(), F.text)
 async def process_add_admin(message: Message, session: AsyncSession, lang: str, state: FSMContext, bot: Bot):
     data = await state.get_data()
     market_id = data.get("market_id")
@@ -90,7 +90,7 @@ async def start_delete_admin(message: Message, session: AsyncSession, lang: str,
     await track_list_message(state, sent)
 
 
-@router.callback_query(F.data.startswith("da_pick:"))
+@router.callback_query(IsSuperAdmin(), F.data.startswith("da_pick:"))
 async def process_delete_admin(callback: CallbackQuery, session: AsyncSession, lang: str, state: FSMContext, bot: Bot):
     user_id = int(callback.data.split(":")[1])
     user = await session.get(UserModel, user_id)
